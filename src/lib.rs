@@ -1,3 +1,5 @@
+mod raw_event;
+
 #[cfg(test)]
 mod tests {
     #[test]
