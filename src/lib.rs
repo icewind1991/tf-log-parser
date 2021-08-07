@@ -1,7 +1,8 @@
-use crate::common::{SubjectData, SubjectError, SubjectId};
+pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::module::EventHandler;
-use crate::raw_event::{RawEvent, RawSubject};
+use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
+pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::{Debug, Formatter};
@@ -9,6 +10,7 @@ use std::ops::Index;
 use thiserror::Error;
 
 mod common;
+mod event;
 pub mod module;
 mod raw_event;
 
@@ -56,7 +58,7 @@ impl Index<SubjectId> for SubjectMap {
 
 impl SubjectMap {
     pub fn insert(&mut self, raw: &RawSubject) -> Result<SubjectId, SubjectError> {
-        let id = raw.into();
+        let id = raw.try_into()?;
         if !self.0.contains_key(&id) {
             self.0.insert(id, raw.try_into()?);
         }

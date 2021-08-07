@@ -190,7 +190,7 @@ fn subject_parser_player(input: &str) -> IResult<&str, RawSubject> {
     ))
 }
 
-fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
+pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
     alt((
         subject_parser_console,
         subject_parser_world,

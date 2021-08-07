@@ -2,6 +2,7 @@ use crate::common::{SubjectData, SubjectId};
 use crate::module::EventHandler;
 use crate::raw_event::{RawEvent, RawEventType};
 use crate::SubjectMap;
+use serde::Serialize;
 use std::convert::Infallible;
 use steamid_ng::SteamID;
 
@@ -12,6 +13,7 @@ struct BareChatMessage {
     pub chat_type: ChatType,
 }
 
+#[derive(Serialize)]
 pub struct ChatMessage {
     pub time: u32,
     pub name: String,
@@ -38,6 +40,7 @@ impl ChatMessage {
     }
 }
 
+#[derive(Serialize)]
 pub enum ChatType {
     All,
     Team,

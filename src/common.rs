@@ -1,11 +1,12 @@
 use crate::raw_event::RawSubject;
+use serde::Serialize;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use steamid_ng::SteamID;
+use steamid_ng::{AccountType, Instance, SteamID, Universe};
 use thiserror::Error;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
+#[derive(Serialize, Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
 pub enum Team {
     Red,
     Blue,
@@ -41,22 +42,44 @@ impl FromStr for Team {
 /// Optimized subject id
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
 pub enum SubjectId {
-    Player(u8),
+    Player(u32),
     Team(Team),
     System,
     World,
     Console,
 }
 
-impl From<&RawSubject<'_>> for SubjectId {
-    fn from(raw: &RawSubject) -> Self {
-        match raw {
-            RawSubject::Player { user_id, .. } => SubjectId::Player(user_id.parse().unwrap()),
-            RawSubject::Team(team) => SubjectId::Team(team.parse().unwrap()),
+impl SubjectId {
+    pub fn steam_id(&self) -> Option<SteamID> {
+        match self {
+            SubjectId::Player(account_id) => Some(SteamID::new(
+                *account_id,
+                Instance::All,
+                AccountType::Individual,
+                Universe::Public,
+            )),
+            _ => None,
+        }
+    }
+}
+
+impl TryFrom<&RawSubject<'_>> for SubjectId {
+    type Error = SubjectError;
+
+    fn try_from(raw: &RawSubject) -> Result<Self, Self::Error> {
+        Ok(match raw {
+            RawSubject::Player { steam_id, .. } => SubjectId::Player(
+                SteamID::from_steam3(steam_id)
+                    .map_err(|_| SubjectError::InvalidSteamId)?
+                    .account_id(),
+            ),
+            RawSubject::Team(team) => {
+                SubjectId::Team(team.parse().map_err(|_| SubjectError::InvalidTeam)?)
+            }
             RawSubject::System(_) => SubjectId::System,
             RawSubject::Console => SubjectId::Console,
             RawSubject::World => SubjectId::World,
-        }
+        })
     }
 }
 
@@ -108,3 +131,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
         })
     }
 }
+
+/// Steam id formatted as steamid3 when serialized
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub struct SteamId3(pub SteamID);

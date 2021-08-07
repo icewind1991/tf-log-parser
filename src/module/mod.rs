@@ -2,6 +2,7 @@ use crate::common::SubjectId;
 use crate::raw_event::{RawEvent, RawEventType};
 use crate::SubjectMap;
 pub use chat::{ChatHandler, ChatMessage, ChatType};
+pub use healspread::{HealSpreadHandler, InvalidHealEvent};
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
 };
@@ -11,6 +12,7 @@ use std::fmt::Debug;
 use thiserror::Error;
 
 mod chat;
+mod healspread;
 mod lobbysettings;
 
 pub trait EventHandler: Default {
