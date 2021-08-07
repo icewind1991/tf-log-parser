@@ -4,6 +4,7 @@ use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
+use std::num::ParseIntError;
 use std::str::{FromStr, ParseBoolError};
 use steamid_ng::SteamID;
 use thiserror::Error;
@@ -121,73 +122,93 @@ pub enum LobbySettingsError {
     #[error("{0}")]
     InvalidBool(#[from] ParseBoolError),
     #[error("{0}")]
+    InvalidInt(#[from] ParseIntError),
+    #[error("{0}")]
     InvalidDate(#[from] chrono::ParseError),
 }
 
-#[derive(Default)]
-pub struct LobbySettingsHandler(Settings);
+pub enum LobbySettingsHandler {
+    NotAvailable,
+    Active(Settings),
+    Err(LobbySettingsError),
+}
+
+impl Default for LobbySettingsHandler {
+    fn default() -> Self {
+        LobbySettingsHandler::NotAvailable
+    }
+}
+
+impl LobbySettingsHandler {
+    fn try_handle(&mut self, msg: &str) -> Result<(), LobbySettingsError> {
+        match self {
+            LobbySettingsHandler::NotAvailable => {
+                if let Some((id, _)) = msg
+                    .strip_prefix("TF2Center Lobby #")
+                    .and_then(|s| str::split_once(s, " |"))
+                {
+                    let mut settings = Settings::default();
+                    settings.id = id.parse()?;
+                    *self = LobbySettingsHandler::Active(settings);
+                }
+            }
+            LobbySettingsHandler::Active(settings) => {
+                if let Some((key, value)) = msg.split_once(": ") {
+                    match key {
+                        "Leader" => settings.leader = value.parse()?,
+                        "Map" => settings.map = value.into(),
+                        "GameType" => settings.game_type = value.parse()?,
+                        "Location" => settings.location = value.parse()?,
+                        "Advanced Lobby" => settings.advanced = value.parse()?,
+                        "Region lock" => settings.region_lock = value.parse()?,
+                        "Allow offclassing" => settings.allow_offclassing = value.parse()?,
+                        "Balancing" => settings.balancing = value.parse()?,
+                        "Restriction" => settings.restriction = value.into(),
+                        "Mumble required" => settings.mumble_required = value.parse()?,
+                        "Launch date" => {
+                            settings.date = get_timezone(value)?
+                                .from_local_datetime(&NaiveDateTime::parse_from_str(
+                                    value,
+                                    "%a %b %d %H:%M:%S %Z %Y",
+                                )?)
+                                .earliest()
+                                .unwrap()
+                                .into()
+                        }
+                        "Server" => settings.server = value.into(),
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
 
 impl EventHandler for LobbySettingsHandler {
-    type Output = Option<Settings>;
-    type Error = LobbySettingsError;
+    type Output = Result<Option<Settings>, LobbySettingsError>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Say)
     }
 
-    fn handle(
-        &mut self,
-        _time: u32,
-        subject: SubjectId,
-        event: &GameEvent,
-    ) -> Result<(), Self::Error> {
+    fn handle(&mut self, _time: u32, subject: SubjectId, event: &GameEvent) {
         if !matches!(subject, SubjectId::Console) {
-            return Ok(());
+            return;
         }
         if let GameEvent::Say(msg) = event {
-            if let Some((id, _)) = msg
-                .strip_prefix("TF2Center Lobby #")
-                .and_then(|s| str::split_once(s, " |"))
-            {
-                self.0.id = id
-                    .parse()
-                    .map_err(|_| LobbySettingsError::InvalidLobbyId(id.into()))?;
-            }
-            if let Some((key, value)) = msg.split_once(": ") {
-                match key {
-                    "Leader" => self.0.leader = value.parse()?,
-                    "Map" => self.0.map = value.into(),
-                    "GameType" => self.0.game_type = value.parse()?,
-                    "Location" => self.0.location = value.parse()?,
-                    "Advanced Lobby" => self.0.advanced = value.parse()?,
-                    "Region lock" => self.0.region_lock = value.parse()?,
-                    "Allow offclassing" => self.0.allow_offclassing = value.parse()?,
-                    "Balancing" => self.0.balancing = value.parse()?,
-                    "Restriction" => self.0.restriction = value.into(),
-                    "Mumble required" => self.0.mumble_required = value.parse()?,
-                    "Launch date" => {
-                        self.0.date = get_timezone(value)?
-                            .from_local_datetime(&NaiveDateTime::parse_from_str(
-                                value,
-                                "%a %b %d %H:%M:%S %Z %Y",
-                            )?)
-                            .earliest()
-                            .unwrap()
-                            .into()
-                    }
-                    "Server" => self.0.server = value.into(),
-                    _ => {}
-                }
+            if let Err(e) = self.try_handle(msg) {
+                *self = LobbySettingsHandler::Err(e)
             }
         }
-        Ok(())
     }
 
     fn finish(self, _subjects: &SubjectMap) -> Self::Output {
-        if self.0.id > 0 {
-            Some(self.0)
-        } else {
-            None
+        match self {
+            LobbySettingsHandler::NotAvailable => Ok(None),
+            LobbySettingsHandler::Active(settings) => Ok(Some(settings)),
+            LobbySettingsHandler::Err(e) => Err(e),
         }
     }
 }

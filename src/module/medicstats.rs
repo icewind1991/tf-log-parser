@@ -66,7 +66,6 @@ pub struct MedicStatsHandler(HashMap<SteamId3, MedicStatsBuilder>);
 
 impl EventHandler for MedicStatsHandler {
     type Output = HashMap<SteamId3, MedicStats>;
-    type Error = InvalidMedicEvent;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(
@@ -80,16 +79,11 @@ impl EventHandler for MedicStatsHandler {
         )
     }
 
-    fn handle(
-        &mut self,
-        time: u32,
-        subject: SubjectId,
-        event: &GameEvent,
-    ) -> Result<(), Self::Error> {
+    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
         let healer_steam_id = if let Some(steam_id) = subject.steam_id() {
             steam_id
         } else {
-            return Ok(());
+            return;
         };
         match event {
             GameEvent::ChargeEnded(end) => {
@@ -138,7 +132,6 @@ impl EventHandler for MedicStatsHandler {
             }
             _ => {}
         }
-        Ok(())
     }
 
     fn finish(self, _subjects: &SubjectMap) -> Self::Output {

@@ -4,7 +4,6 @@ use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use serde::Serialize;
-use std::convert::Infallible;
 use steamid_ng::SteamID;
 
 struct BareChatMessage {
@@ -52,20 +51,14 @@ pub struct ChatHandler(Vec<BareChatMessage>);
 
 impl EventHandler for ChatHandler {
     type Output = Vec<ChatMessage>;
-    type Error = Infallible;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::SayTeam | RawEventType::Say)
     }
 
-    fn handle(
-        &mut self,
-        time: u32,
-        subject: SubjectId,
-        event: &GameEvent,
-    ) -> Result<(), Infallible> {
+    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
         if !matches!(subject, SubjectId::Player(_)) {
-            return Ok(());
+            return;
         }
         match event {
             GameEvent::SayTeam(message) => self.0.push(BareChatMessage {
@@ -82,7 +75,6 @@ impl EventHandler for ChatHandler {
             }),
             _ => {}
         }
-        Ok(())
     }
 
     fn finish(self, subjects: &SubjectMap) -> Self::Output {

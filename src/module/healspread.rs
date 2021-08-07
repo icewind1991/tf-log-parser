@@ -4,29 +4,23 @@ use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use std::collections::HashMap;
-use std::convert::{Infallible, TryFrom};
+use std::convert::TryFrom;
 
 #[derive(Default)]
 pub struct HealSpreadHandler(HashMap<SteamId3, HashMap<SteamId3, u32>>);
 
 impl EventHandler for HealSpreadHandler {
     type Output = HashMap<SteamId3, HashMap<SteamId3, u32>>;
-    type Error = Infallible;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Healed)
     }
 
-    fn handle(
-        &mut self,
-        _time: u32,
-        subject: SubjectId,
-        event: &GameEvent,
-    ) -> Result<(), Self::Error> {
+    fn handle(&mut self, _time: u32, subject: SubjectId, event: &GameEvent) {
         let healer_steam_id = if let Some(steam_id) = subject.steam_id() {
             steam_id
         } else {
-            return Ok(());
+            return;
         };
         if let GameEvent::Healed(heal_event) = event {
             if let Ok(target_subject) = SubjectId::try_from(&heal_event.target) {
@@ -41,7 +35,6 @@ impl EventHandler for HealSpreadHandler {
                 }
             }
         }
-        Ok(())
     }
 
     fn finish(self, _subjects: &SubjectMap) -> Self::Output {

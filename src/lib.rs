@@ -9,7 +9,7 @@ pub use raw_event::{RawEvent, RawEventType};
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use std::ops::Index;
 use thiserror::Error;
 
@@ -18,35 +18,24 @@ mod event;
 pub mod module;
 mod raw_event;
 
-#[derive(Error)]
-pub enum Error<Handler: EventHandler> {
+#[derive(Error, Debug)]
+pub enum Error {
     #[error("Malformed logfile: {0}")]
-    Malformed(String),
+    Malformed(nom::error::Error<String>),
+    #[error("Incomplete logfile")]
+    Incomplete,
+    #[error("Malformed subject: {0}")]
+    Subject(#[from] SubjectError),
     #[error("{0}")]
     MalformedEvent(#[from] GameEventError),
-    #[error("{0}")]
-    HandlerError(Handler::Error),
 }
 
-impl<Handler: EventHandler> Debug for Error<Handler> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Malformed(e) => e.fmt(f),
-            Error::MalformedEvent(e) => e.fmt(f),
-            Error::HandlerError(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<Handler: EventHandler> From<SubjectError> for Error<Handler> {
-    fn from(e: SubjectError) -> Self {
-        Error::Malformed(e.to_string())
-    }
-}
-
-impl<Handler: EventHandler> From<nom::error::Error<&'_ str>> for Error<Handler> {
+impl From<nom::error::Error<&'_ str>> for Error {
     fn from(e: nom::error::Error<&str>) -> Self {
-        Error::Malformed(e.to_string())
+        Error::Malformed(nom::error::Error {
+            input: e.input.to_string(),
+            code: e.code,
+        })
     }
 }
 
@@ -73,13 +62,11 @@ impl SubjectMap {
     }
 }
 
-pub fn parse(log: &str) -> Result<LogOutput, Error<LogHandler>> {
+pub fn parse(log: &str) -> Result<LogOutput, Error> {
     parse_with_handler::<LogHandler>(log)
 }
 
-pub fn parse_with_handler<Handler: EventHandler>(
-    log: &str,
-) -> Result<Handler::Output, Error<Handler>> {
+pub fn parse_with_handler<Handler: EventHandler>(log: &str) -> Result<Handler::Output, Error> {
     let events = log
         .lines()
         .filter(|line| line.starts_with("L "))
@@ -104,9 +91,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
             };
             if should_handle {
                 let event = GameEvent::parse(&raw_event)?;
-                handler
-                    .handle(match_time, subjects.insert(&raw_event.subject)?, &event)
-                    .map_err(Error::HandlerError)?;
+                handler.handle(match_time, subjects.insert(&raw_event.subject)?, &event);
             }
         }
     }
@@ -136,7 +121,6 @@ pub enum LogError {
 
 impl EventHandler for LogHandler {
     type Output = LogOutput;
-    type Error = LogError;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         self.chat.does_handle(ty)
@@ -144,16 +128,10 @@ impl EventHandler for LogHandler {
             || self.medic_stats.does_handle(ty)
     }
 
-    fn handle(
-        &mut self,
-        time: u32,
-        subject: SubjectId,
-        event: &GameEvent,
-    ) -> Result<(), Self::Error> {
-        self.chat.handle(time, subject, event).unwrap();
-        self.heal_spread.handle(time, subject, event).unwrap();
-        self.medic_stats.handle(time, subject, event).unwrap();
-        Ok(())
+    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
+        self.chat.handle(time, subject, event);
+        self.heal_spread.handle(time, subject, event);
+        self.medic_stats.handle(time, subject, event);
     }
 
     fn finish(self, subjects: &SubjectMap) -> Self::Output {

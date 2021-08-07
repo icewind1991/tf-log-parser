@@ -74,6 +74,5 @@ pub fn medic_death_event_parser(input: &str) -> IResult<&str, MedicDeathEvent> {
             charge = Some(quoted(u_int)(value)?.1);
         }
     }
-    let (input, time) = opt(param_parse_with("time", quoted(float)))(input)?;
     Ok((input, MedicDeathEvent { charge }))
 }
