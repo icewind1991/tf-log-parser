@@ -8,3 +8,7 @@ steamid-ng = "1"
 nom = "6"
 enum-iterator = "0.7"
 chrono = "0.4"
+thiserror = "1"
+
+[dev-dependencies]
+main_error = "0.1"

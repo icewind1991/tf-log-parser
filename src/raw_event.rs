@@ -56,10 +56,10 @@ pub struct RawDate<'a> {
     pub seconds: &'a str,
 }
 
-impl<'a> TryFrom<RawDate<'a>> for DateTime<Utc> {
+impl<'a> TryFrom<&RawDate<'a>> for DateTime<Utc> {
     type Error = ParseIntError;
 
-    fn try_from(value: RawDate<'a>) -> Result<Self, Self::Error> {
+    fn try_from(value: &RawDate<'a>) -> Result<Self, Self::Error> {
         Ok(Utc
             .ymd(
                 value.year.parse()?,
@@ -115,20 +115,32 @@ pub enum RawSubject<'a> {
     World,
 }
 
+impl<'a> RawSubject<'a> {
+    pub fn name(&self) -> &'a str {
+        match self {
+            RawSubject::Player { name, .. } => name,
+            RawSubject::Team(team) => team,
+            RawSubject::System(system) => system,
+            RawSubject::Console => "Console",
+            RawSubject::World => "World",
+        }
+    }
+}
+
 fn subject_parser_world(input: &str) -> IResult<&str, RawSubject> {
     let (input, _) = tag("World")(input)?;
     Ok((input, RawSubject::World))
 }
 
 fn subject_parser_console(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = tag("Console<0><Console><Console>")(input)?;
-    Ok((input, RawSubject::World))
+    let (input, _) = tag(r#""Console<0><Console><Console>""#)(input)?;
+    Ok((input, RawSubject::Console))
 }
 
 fn subject_parser_team(input: &str) -> IResult<&str, RawSubject> {
     let (input, _) = tag(r#"Team ""#)(input)?;
 
-    let (input, team) = take_while(|c| c != '"')(input)?;
+    let (input, team) = alt((tag("Red"), tag("Blue")))(input)?;
 
     let (input, _) = one_of("\"")(input)?;
     Ok((input, RawSubject::Team(team)))
