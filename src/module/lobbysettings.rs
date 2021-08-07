@@ -1,6 +1,7 @@
 use crate::common::SubjectId;
 use crate::module::EventHandler;
 use crate::raw_event::{RawEvent, RawEventType};
+use crate::SubjectMap;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use std::str::{FromStr, ParseBoolError};
 use steamid_ng::SteamID;
@@ -182,7 +183,7 @@ impl EventHandler for LobbySettingsHandler {
         Ok(())
     }
 
-    fn finish(self) -> Self::Output {
+    fn finish(self, _subjects: &SubjectMap) -> Self::Output {
         if self.0.id > 0 {
             Some(self.0)
         } else {

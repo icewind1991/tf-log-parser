@@ -1,8 +1,11 @@
+use crate::common::{SubjectData, SubjectError, SubjectId};
 use crate::module::EventHandler;
-use crate::raw_event::RawEvent;
+use crate::raw_event::{RawEvent, RawSubject};
 use chrono::{DateTime, Utc};
+use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::{Debug, Formatter};
+use std::ops::Index;
 use thiserror::Error;
 
 mod common;
@@ -26,9 +29,38 @@ impl<Handler: EventHandler> Debug for Error<Handler> {
     }
 }
 
+impl<Handler: EventHandler> From<SubjectError> for Error<Handler> {
+    fn from(e: SubjectError) -> Self {
+        Error::Malformed(e.to_string())
+    }
+}
+
 impl<Handler: EventHandler> From<nom::error::Error<&'_ str>> for Error<Handler> {
     fn from(e: nom::error::Error<&str>) -> Self {
         Error::Malformed(e.to_string())
+    }
+}
+
+#[derive(Default)]
+pub struct SubjectMap(BTreeMap<SubjectId, SubjectData>);
+
+impl Index<SubjectId> for SubjectMap {
+    type Output = SubjectData;
+
+    fn index(&self, index: SubjectId) -> &Self::Output {
+        self.0
+            .get(&index)
+            .expect("subject id created without matching subject data")
+    }
+}
+
+impl SubjectMap {
+    pub fn insert(&mut self, raw: &RawSubject) -> Result<SubjectId, SubjectError> {
+        let id = raw.into();
+        if !self.0.contains_key(&id) {
+            self.0.insert(id, raw.try_into()?);
+        }
+        Ok(id)
     }
 }
 
@@ -43,6 +75,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     let mut handler = Handler::default();
 
     let mut start_time: Option<DateTime<Utc>> = None;
+    let mut subjects = SubjectMap::default();
 
     for event_res in events {
         let event = event_res?;
@@ -56,10 +89,10 @@ pub fn parse_with_handler<Handler: EventHandler>(
                 }
             };
             handler
-                .handle(match_time, (&event.subject).into(), &event)
+                .handle(match_time, subjects.insert(&event.subject)?, &event)
                 .map_err(Error::HandlerError)?;
         }
     }
 
-    Ok(handler.finish())
+    Ok(handler.finish(&subjects))
 }

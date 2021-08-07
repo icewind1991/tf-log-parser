@@ -1,5 +1,6 @@
 use crate::common::SubjectId;
 use crate::raw_event::{RawEvent, RawEventType};
+use crate::SubjectMap;
 pub use chat::{ChatHandler, ChatMessage, ChatType};
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
@@ -25,7 +26,7 @@ pub trait EventHandler: Default {
         event: &RawEvent,
     ) -> Result<(), Self::Error>;
 
-    fn finish(self) -> Self::Output;
+    fn finish(self, subjects: &SubjectMap) -> Self::Output;
 }
 
 #[derive(Default)]
@@ -57,8 +58,8 @@ impl<Head: EventHandler, Tail: EventHandler> EventHandler for HandlerStack<Head,
         Ok(())
     }
 
-    fn finish(self) -> Self::Output {
-        (self.head.finish(), self.tail.finish())
+    fn finish(self, subjects: &SubjectMap) -> Self::Output {
+        (self.head.finish(subjects), self.tail.finish(subjects))
     }
 }
 
@@ -112,9 +113,9 @@ impl<Handler: EventHandler> EventHandler for OptionalHandler<Handler> {
         Ok(())
     }
 
-    fn finish(self) -> Self::Output {
+    fn finish(self, subjects: &SubjectMap) -> Self::Output {
         match self {
-            OptionalHandler::Active(handler) => Ok(handler.finish()),
+            OptionalHandler::Active(handler) => Ok(handler.finish(subjects)),
             OptionalHandler::Failed(e) => Err(e),
         }
     }

@@ -18,7 +18,7 @@ fn main() -> Result<(), MainError> {
     }
 
     for message in chat {
-        println!("{}: {}", message.time, message.message);
+        println!("{}: {}", message.name, message.message);
     }
     Ok(())
 }
