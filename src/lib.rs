@@ -1,13 +1,12 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
-use crate::event::{GameEvent, GameEventError};
-use crate::module::{
-    ChatHandler, ChatMessage, EventHandler, HealSpreadHandler, MedicStats, MedicStatsHandler,
-};
+use crate::event::GameEventError;
+pub use crate::module::EventHandler;
+use crate::module::{ChatHandler, HealSpreadHandler, MedicStatsHandler};
 use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
+pub use event::GameEvent;
 pub use raw_event::{RawEvent, RawEventType};
-use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
 use std::ops::Index;
@@ -15,6 +14,7 @@ use thiserror::Error;
 
 mod common;
 mod event;
+#[macro_use]
 pub mod module;
 mod raw_event;
 
@@ -62,7 +62,7 @@ impl SubjectMap {
     }
 }
 
-pub fn parse(log: &str) -> Result<LogOutput, Error> {
+pub fn parse(log: &str) -> Result<<LogHandler as EventHandler>::Output, Error> {
     parse_with_handler::<LogHandler>(log)
 }
 
@@ -99,46 +99,8 @@ pub fn parse_with_handler<Handler: EventHandler>(log: &str) -> Result<Handler::O
     Ok(handler.finish(&subjects))
 }
 
-#[derive(Default)]
-pub struct LogHandler {
+handler!(LogHandler {
     chat: ChatHandler,
     heal_spread: HealSpreadHandler,
     medic_stats: MedicStatsHandler,
-}
-
-#[derive(Default, Serialize)]
-pub struct LogOutput {
-    chat: Vec<ChatMessage>,
-    heal_spread: HashMap<SteamId3, HashMap<SteamId3, u32>>,
-    medic_stats: HashMap<SteamId3, MedicStats>,
-}
-
-#[derive(Error, Debug)]
-pub enum LogError {
-    #[error("{0}")]
-    MalformedEvent(#[from] GameEventError),
-}
-
-impl EventHandler for LogHandler {
-    type Output = LogOutput;
-
-    fn does_handle(&self, ty: RawEventType) -> bool {
-        self.chat.does_handle(ty)
-            || self.heal_spread.does_handle(ty)
-            || self.medic_stats.does_handle(ty)
-    }
-
-    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
-        self.chat.handle(time, subject, event);
-        self.heal_spread.handle(time, subject, event);
-        self.medic_stats.handle(time, subject, event);
-    }
-
-    fn finish(self, subjects: &SubjectMap) -> Self::Output {
-        LogOutput {
-            chat: self.chat.finish(subjects),
-            heal_spread: self.heal_spread.finish(subjects),
-            medic_stats: self.medic_stats.finish(subjects),
-        }
-    }
-}
+});

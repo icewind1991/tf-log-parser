@@ -4,12 +4,13 @@ use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
+use serde::{Serialize, Serializer};
 use std::num::ParseIntError;
 use std::str::{FromStr, ParseBoolError};
 use steamid_ng::SteamID;
 use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum GameType {
     Sixes,
     Highlander,
@@ -27,7 +28,7 @@ impl FromStr for GameType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum Location {
     Europe,
     NorthAmerica,
@@ -45,7 +46,7 @@ impl FromStr for Location {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct LobbyLeader {
     name: String,
     steam_id: SteamID,
@@ -70,7 +71,7 @@ impl FromStr for LobbyLeader {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Settings {
     id: u32,
     leader: LobbyLeader,
@@ -125,6 +126,15 @@ pub enum LobbySettingsError {
     InvalidInt(#[from] ParseIntError),
     #[error("{0}")]
     InvalidDate(#[from] chrono::ParseError),
+}
+
+impl Serialize for LobbySettingsError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        format!("{}", self).serialize(serializer)
+    }
 }
 
 pub enum LobbySettingsHandler {
