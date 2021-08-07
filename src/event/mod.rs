@@ -43,11 +43,13 @@ impl<'a, T> GameEventErrTrait<T> for IResult<&str, T> {
     }
 }
 
+#[derive(Debug)]
 pub enum GameEvent<'a> {
     ShotFired(ShotFiredEvent<'a>),
     ShotHit(ShotHitEvent<'a>),
     Damage(DamageEvent<'a>),
     Kill(KillEvent<'a>),
+    KillAssist(KillAssistEvent<'a>),
     Say(&'a str),
     SayTeam(&'a str),
     Healed(HealedEvent<'a>),
@@ -64,6 +66,18 @@ impl<'a> GameEvent<'a> {
         Ok(match raw.ty {
             RawEventType::ShotFired => {
                 GameEvent::ShotFired(shot_fired_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::ShotHit => {
+                GameEvent::ShotHit(shot_hit_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::Damage => {
+                GameEvent::Damage(damage_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::Killed => {
+                GameEvent::Kill(kill_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::KillAssist => {
+                GameEvent::KillAssist(kill_assist_event_parser(raw.params).with_type(raw.ty)?)
             }
             RawEventType::SayTeam => GameEvent::SayTeam(raw.params.trim_matches('"')),
             RawEventType::Say => GameEvent::Say(raw.params.trim_matches('"')),
@@ -122,7 +136,7 @@ fn param_pair_parse(input: &str) -> IResult<&str, (&str, &str)> {
     let (input, _) = tag(r#"""#)(input)?;
 
     if open_tag.is_some() {
-        let (_input, _) = tag("(")(input)?;
+        let (_input, _) = tag(")")(input)?;
     }
     Ok((input, (key, value)))
 }

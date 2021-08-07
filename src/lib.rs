@@ -13,7 +13,7 @@ use std::ops::Index;
 use thiserror::Error;
 
 mod common;
-mod event;
+pub mod event;
 #[macro_use]
 pub mod module;
 mod raw_event;

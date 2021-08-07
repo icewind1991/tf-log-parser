@@ -136,6 +136,12 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SteamId3(pub SteamID);
 
+impl From<SteamID> for SteamId3 {
+    fn from(id: SteamID) -> Self {
+        SteamId3(id)
+    }
+}
+
 impl Serialize for SteamId3 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

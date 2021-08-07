@@ -1,4 +1,4 @@
-use crate::event::{param_parse, param_parse_with, position, quoted, u_int, ParamIter};
+use crate::event::{param_parse, param_parse_with, position, u_int, ParamIter};
 use crate::raw_event::{subject_parser, RawSubject};
 use nom::combinator::opt;
 use nom::IResult;
@@ -19,9 +19,9 @@ pub struct ShotHitEvent<'a> {
     pub weapon: Option<&'a str>,
 }
 
-pub fn shot_hit_event_parser(input: &str) -> IResult<&str, ShotFiredEvent> {
+pub fn shot_hit_event_parser(input: &str) -> IResult<&str, ShotHitEvent> {
     let (input, weapon) = opt(param_parse("weapon"))(input)?;
-    Ok((input, ShotFiredEvent { weapon }))
+    Ok((input, ShotHitEvent { weapon }))
 }
 
 #[derive(Debug)]
@@ -42,8 +42,8 @@ pub fn damage_event_parser(input: &str) -> IResult<&str, DamageEvent> {
     };
     for (key, value) in ParamIter::new(input) {
         match key {
-            "damage" => event.damage = NonZeroU32::new(quoted(u_int)(value)?.1),
-            "realdamage" => event.real_damage = NonZeroU32::new(quoted(u_int)(value)?.1),
+            "damage" => event.damage = NonZeroU32::new(u_int(value)?.1),
+            "realdamage" => event.real_damage = NonZeroU32::new(u_int(value)?.1),
             "weapon" => event.weapon = Some(value.trim_matches('"')),
             _ => {}
         }

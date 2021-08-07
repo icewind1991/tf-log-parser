@@ -1,3 +1,5 @@
+//! Example for creating a handler that combines the output of multiple handlers
+
 use main_error::MainError;
 use std::env::args;
 use std::fs;
