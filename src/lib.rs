@@ -1,9 +1,10 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
-use crate::module::EventHandler;
+use crate::module::{ChatHandler, ChatMessage, EventHandler, HealSpreadHandler, InvalidHealEvent};
 use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
 pub use raw_event::{RawEvent, RawEventType};
-use std::collections::BTreeMap;
+use serde::Serialize;
+use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
 use std::fmt::{Debug, Formatter};
 use std::ops::Index;
@@ -66,6 +67,10 @@ impl SubjectMap {
     }
 }
 
+pub fn parse(log: &str) -> Result<LogOutput, Error<LogHandler>> {
+    parse_with_handler::<LogHandler>(log)
+}
+
 pub fn parse_with_handler<Handler: EventHandler>(
     log: &str,
 ) -> Result<Handler::Output, Error<Handler>> {
@@ -97,4 +102,49 @@ pub fn parse_with_handler<Handler: EventHandler>(
     }
 
     Ok(handler.finish(&subjects))
+}
+
+#[derive(Default)]
+pub struct LogHandler {
+    chat: ChatHandler,
+    heal_spread: HealSpreadHandler,
+}
+
+#[derive(Default, Serialize)]
+pub struct LogOutput {
+    chat: Vec<ChatMessage>,
+    heal_spread: HashMap<SteamId3, HashMap<SteamId3, u32>>,
+}
+
+#[derive(Error, Debug)]
+pub enum LogError {
+    #[error("{0}")]
+    HealSpread(#[from] InvalidHealEvent),
+}
+
+impl EventHandler for LogHandler {
+    type Output = LogOutput;
+    type Error = LogError;
+
+    fn does_handle(&self, ty: RawEventType) -> bool {
+        self.chat.does_handle(ty) || self.heal_spread.does_handle(ty)
+    }
+
+    fn handle(
+        &mut self,
+        time: u32,
+        subject: SubjectId,
+        event: &RawEvent,
+    ) -> Result<(), Self::Error> {
+        self.chat.handle(time, subject, event).unwrap();
+        self.heal_spread.handle(time, subject, event)?;
+        Ok(())
+    }
+
+    fn finish(self, subjects: &SubjectMap) -> Self::Output {
+        LogOutput {
+            chat: self.chat.finish(subjects),
+            heal_spread: self.heal_spread.finish(subjects),
+        }
+    }
 }
