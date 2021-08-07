@@ -39,7 +39,7 @@ impl<'a, T> GameEventErrTrait<T> for IResult<&str, T> {
 
             Err::Incomplete(_) => GameEventError::Incomplete(ty),
         })
-        .map(|(rest, t)| t)
+        .map(|(_rest, t)| t)
     }
 }
 
@@ -51,6 +51,12 @@ pub enum GameEvent<'a> {
     Say(&'a str),
     SayTeam(&'a str),
     Healed(HealedEvent<'a>),
+    ChargeDeployed(ChargeDeployedEvent<'a>),
+    ChargeEnded(ChargeEndedEvent),
+    AdvantageLost(AdvantageLostEvent),
+    FirstHeal(FirstHealEvent),
+    ChargeReady,
+    MedicDeath(MedicDeathEvent),
 }
 
 impl<'a> GameEvent<'a> {
@@ -63,6 +69,22 @@ impl<'a> GameEvent<'a> {
             RawEventType::Say => GameEvent::Say(raw.params.trim_matches('"')),
             RawEventType::Healed => {
                 GameEvent::Healed(healed_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::ChargeDeployed => GameEvent::ChargeDeployed(
+                charge_deployed_event_parser(raw.params).with_type(raw.ty)?,
+            ),
+            RawEventType::ChargeEnd => {
+                GameEvent::ChargeEnded(charge_ended_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::UberAdvantageLost => {
+                GameEvent::AdvantageLost(advantage_lost_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::FirstHealAfterSpawn => {
+                GameEvent::FirstHeal(first_heal_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::ChargeReady => GameEvent::ChargeReady,
+            RawEventType::MedicDeath => {
+                GameEvent::MedicDeath(medic_death_event_parser(raw.params).with_type(raw.ty)?)
             }
             _ => {
                 todo!("{:?} not parsed yet", raw.ty);

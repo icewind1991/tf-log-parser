@@ -7,6 +7,7 @@ pub use healspread::HealSpreadHandler;
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
 };
+pub use medicstats::{MedicStats, MedicStatsHandler};
 use std::convert::Infallible;
 use std::error::Error;
 use std::fmt::Debug;

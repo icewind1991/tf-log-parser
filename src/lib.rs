@@ -1,6 +1,8 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::{GameEvent, GameEventError};
-use crate::module::{ChatHandler, ChatMessage, EventHandler, HealSpreadHandler};
+use crate::module::{
+    ChatHandler, ChatMessage, EventHandler, HealSpreadHandler, MedicStats, MedicStatsHandler,
+};
 use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
 pub use raw_event::{RawEvent, RawEventType};
@@ -116,12 +118,14 @@ pub fn parse_with_handler<Handler: EventHandler>(
 pub struct LogHandler {
     chat: ChatHandler,
     heal_spread: HealSpreadHandler,
+    medic_stats: MedicStatsHandler,
 }
 
 #[derive(Default, Serialize)]
 pub struct LogOutput {
     chat: Vec<ChatMessage>,
     heal_spread: HashMap<SteamId3, HashMap<SteamId3, u32>>,
+    medic_stats: HashMap<SteamId3, MedicStats>,
 }
 
 #[derive(Error, Debug)]
@@ -135,7 +139,9 @@ impl EventHandler for LogHandler {
     type Error = LogError;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
-        self.chat.does_handle(ty) || self.heal_spread.does_handle(ty)
+        self.chat.does_handle(ty)
+            || self.heal_spread.does_handle(ty)
+            || self.medic_stats.does_handle(ty)
     }
 
     fn handle(
@@ -146,6 +152,7 @@ impl EventHandler for LogHandler {
     ) -> Result<(), Self::Error> {
         self.chat.handle(time, subject, event).unwrap();
         self.heal_spread.handle(time, subject, event).unwrap();
+        self.medic_stats.handle(time, subject, event).unwrap();
         Ok(())
     }
 
@@ -153,6 +160,7 @@ impl EventHandler for LogHandler {
         LogOutput {
             chat: self.chat.finish(subjects),
             heal_spread: self.heal_spread.finish(subjects),
+            medic_stats: self.medic_stats.finish(subjects),
         }
     }
 }

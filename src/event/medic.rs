@@ -1,4 +1,4 @@
-use crate::event::{param_parse, param_parse_with, quoted, u_int};
+use crate::event::{param_parse, param_parse_with, quoted, u_int, ParamIter};
 use crate::raw_event::{subject_parser, RawSubject};
 use nom::combinator::opt;
 use nom::number::complete::float;
@@ -40,4 +40,40 @@ pub struct ChargeEndedEvent {
 pub fn charge_ended_event_parser(input: &str) -> IResult<&str, ChargeEndedEvent> {
     let (input, duration) = opt(param_parse_with("duration", quoted(float)))(input)?;
     Ok((input, ChargeEndedEvent { duration }))
+}
+
+#[derive(Debug)]
+pub struct AdvantageLostEvent {
+    pub time: Option<f32>,
+}
+
+pub fn advantage_lost_event_parser(input: &str) -> IResult<&str, AdvantageLostEvent> {
+    let (input, time) = opt(param_parse_with("time", quoted(float)))(input)?;
+    Ok((input, AdvantageLostEvent { time }))
+}
+
+#[derive(Debug)]
+pub struct FirstHealEvent {
+    pub time: Option<f32>,
+}
+
+pub fn first_heal_event_parser(input: &str) -> IResult<&str, FirstHealEvent> {
+    let (input, time) = opt(param_parse_with("time", quoted(float)))(input)?;
+    Ok((input, FirstHealEvent { time }))
+}
+
+#[derive(Debug)]
+pub struct MedicDeathEvent {
+    pub charge: Option<u32>,
+}
+
+pub fn medic_death_event_parser(input: &str) -> IResult<&str, MedicDeathEvent> {
+    let mut charge = None;
+    for (key, value) in ParamIter::new(input) {
+        if key == "ubercharge" {
+            charge = Some(quoted(u_int)(value)?.1);
+        }
+    }
+    let (input, time) = opt(param_parse_with("time", quoted(float)))(input)?;
+    Ok((input, MedicDeathEvent { charge }))
 }
