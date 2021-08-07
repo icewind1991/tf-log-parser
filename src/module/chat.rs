@@ -1,6 +1,7 @@
 use crate::common::{SubjectData, SubjectId};
+use crate::event::GameEvent;
 use crate::module::EventHandler;
-use crate::raw_event::{RawEvent, RawEventType};
+use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use serde::Serialize;
 use std::convert::Infallible;
@@ -61,22 +62,22 @@ impl EventHandler for ChatHandler {
         &mut self,
         time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Infallible> {
         if !matches!(subject, SubjectId::Player(_)) {
             return Ok(());
         }
-        match event.ty {
-            RawEventType::SayTeam => self.0.push(BareChatMessage {
+        match event {
+            GameEvent::SayTeam(message) => self.0.push(BareChatMessage {
                 time,
                 subject,
-                message: event.params.trim_matches('"').into(),
+                message: message.to_string(),
                 chat_type: ChatType::Team,
             }),
-            RawEventType::Say => self.0.push(BareChatMessage {
+            GameEvent::Say(message) => self.0.push(BareChatMessage {
                 time,
                 subject,
-                message: event.params.trim_matches('"').into(),
+                message: message.to_string(),
                 chat_type: ChatType::All,
             }),
             _ => {}

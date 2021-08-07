@@ -1,6 +1,7 @@
 use crate::common::SubjectId;
+use crate::event::GameEvent;
 use crate::module::EventHandler;
-use crate::raw_event::{RawEvent, RawEventType};
+use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use std::str::{FromStr, ParseBoolError};
@@ -138,13 +139,12 @@ impl EventHandler for LobbySettingsHandler {
         &mut self,
         _time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error> {
         if !matches!(subject, SubjectId::Console) {
             return Ok(());
         }
-        if matches!(event.ty, RawEventType::Say) {
-            let msg = event.params.trim_matches('"');
+        if let GameEvent::Say(msg) = event {
             if let Some((id, _)) = msg
                 .strip_prefix("TF2Center Lobby #")
                 .and_then(|s| str::split_once(s, " |"))

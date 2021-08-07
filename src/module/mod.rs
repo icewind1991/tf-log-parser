@@ -1,8 +1,9 @@
 use crate::common::SubjectId;
-use crate::raw_event::{RawEvent, RawEventType};
+use crate::event::GameEvent;
+use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 pub use chat::{ChatHandler, ChatMessage, ChatType};
-pub use healspread::{HealSpreadHandler, InvalidHealEvent};
+pub use healspread::HealSpreadHandler;
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
 };
@@ -14,6 +15,7 @@ use thiserror::Error;
 mod chat;
 mod healspread;
 mod lobbysettings;
+mod medicstats;
 
 pub trait EventHandler: Default {
     type Output;
@@ -25,7 +27,7 @@ pub trait EventHandler: Default {
         &mut self,
         time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error>;
 
     fn finish(self, subjects: &SubjectMap) -> Self::Output;
@@ -49,7 +51,7 @@ impl<Head: EventHandler, Tail: EventHandler> EventHandler for HandlerStack<Head,
         &mut self,
         time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error> {
         self.head
             .handle(time, subject, event)
@@ -100,7 +102,7 @@ impl<Handler: EventHandler> EventHandler for OptionalHandler<Handler> {
         &mut self,
         time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error> {
         let res = if let OptionalHandler::Active(handler) = self {
             handler.handle(time, subject, event)

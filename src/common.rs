@@ -1,5 +1,5 @@
 use crate::raw_event::RawSubject;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -135,3 +135,12 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
 /// Steam id formatted as steamid3 when serialized
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SteamId3(pub SteamID);
+
+impl Serialize for SteamId3 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.steam3().serialize(serializer)
+    }
+}

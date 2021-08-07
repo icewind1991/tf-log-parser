@@ -1,32 +1,17 @@
 use crate::common::{SteamId3, SubjectId};
-use crate::event::healed_event_parser;
+use crate::event::GameEvent;
 use crate::module::EventHandler;
-use crate::raw_event::{RawEvent, RawEventType};
+use crate::raw_event::RawEventType;
 use crate::SubjectMap;
-use serde::{Serialize, Serializer};
 use std::collections::HashMap;
-use std::convert::TryFrom;
-use thiserror::Error;
-
-impl Serialize for SteamId3 {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.0.steam3().serialize(serializer)
-    }
-}
+use std::convert::{Infallible, TryFrom};
 
 #[derive(Default)]
 pub struct HealSpreadHandler(HashMap<SteamId3, HashMap<SteamId3, u32>>);
 
-#[derive(Error, Debug)]
-#[error("Invalid healed event: {0}")]
-pub struct InvalidHealEvent(String);
-
 impl EventHandler for HealSpreadHandler {
     type Output = HashMap<SteamId3, HashMap<SteamId3, u32>>;
-    type Error = InvalidHealEvent;
+    type Error = Infallible;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Healed)
@@ -36,17 +21,15 @@ impl EventHandler for HealSpreadHandler {
         &mut self,
         _time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error> {
         let healer_steam_id = if let Some(steam_id) = subject.steam_id() {
             steam_id
         } else {
             return Ok(());
         };
-        if matches!(event.ty, RawEventType::Healed) {
-            let (_, heal_event) = healed_event_parser(event.params)
-                .map_err(|_| InvalidHealEvent(event.params.into()))?;
-            if let Ok(target_subject) = SubjectId::try_from(&heal_event.subject) {
+        if let GameEvent::Healed(heal_event) = event {
+            if let Ok(target_subject) = SubjectId::try_from(&heal_event.target) {
                 if let Some(target_steam_id) = target_subject.steam_id() {
                     let healed = self
                         .0

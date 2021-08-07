@@ -1,5 +1,6 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
-use crate::module::{ChatHandler, ChatMessage, EventHandler, HealSpreadHandler, InvalidHealEvent};
+use crate::event::{GameEvent, GameEventError};
+use crate::module::{ChatHandler, ChatMessage, EventHandler, HealSpreadHandler};
 use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
 pub use raw_event::{RawEvent, RawEventType};
@@ -20,6 +21,8 @@ pub enum Error<Handler: EventHandler> {
     #[error("Malformed logfile: {0}")]
     Malformed(String),
     #[error("{0}")]
+    MalformedEvent(#[from] GameEventError),
+    #[error("{0}")]
     HandlerError(Handler::Error),
 }
 
@@ -27,6 +30,7 @@ impl<Handler: EventHandler> Debug for Error<Handler> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Malformed(e) => e.fmt(f),
+            Error::MalformedEvent(e) => e.fmt(f),
             Error::HandlerError(e) => e.fmt(f),
         }
     }
@@ -85,9 +89,10 @@ pub fn parse_with_handler<Handler: EventHandler>(
     let mut subjects = SubjectMap::default();
 
     for event_res in events {
-        let event = event_res?;
-        if handler.does_handle(event.ty) || start_time.is_none() {
-            let event_time: DateTime<Utc> = (&event.date).try_into().unwrap();
+        let raw_event = event_res?;
+        let should_handle = handler.does_handle(raw_event.ty);
+        if should_handle || start_time.is_none() {
+            let event_time: DateTime<Utc> = (&raw_event.date).try_into().unwrap();
             let match_time = match start_time {
                 Some(start_time) => (event_time - start_time).num_seconds() as u32,
                 None => {
@@ -95,9 +100,12 @@ pub fn parse_with_handler<Handler: EventHandler>(
                     0
                 }
             };
-            handler
-                .handle(match_time, subjects.insert(&event.subject)?, &event)
-                .map_err(Error::HandlerError)?;
+            if should_handle {
+                let event = GameEvent::parse(&raw_event)?;
+                handler
+                    .handle(match_time, subjects.insert(&raw_event.subject)?, &event)
+                    .map_err(Error::HandlerError)?;
+            }
         }
     }
 
@@ -119,7 +127,7 @@ pub struct LogOutput {
 #[derive(Error, Debug)]
 pub enum LogError {
     #[error("{0}")]
-    HealSpread(#[from] InvalidHealEvent),
+    MalformedEvent(#[from] GameEventError),
 }
 
 impl EventHandler for LogHandler {
@@ -134,10 +142,10 @@ impl EventHandler for LogHandler {
         &mut self,
         time: u32,
         subject: SubjectId,
-        event: &RawEvent,
+        event: &GameEvent,
     ) -> Result<(), Self::Error> {
         self.chat.handle(time, subject, event).unwrap();
-        self.heal_spread.handle(time, subject, event)?;
+        self.heal_spread.handle(time, subject, event).unwrap();
         Ok(())
     }
 
