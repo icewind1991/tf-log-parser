@@ -1,3 +1,4 @@
+use crate::common::Class;
 use crate::event::{param_parse, param_parse_with, position, u_int, ParamIter};
 use crate::raw_event::{subject_parser, RawSubject};
 use nom::combinator::opt;
@@ -60,7 +61,7 @@ pub struct KillEvent<'a> {
 }
 
 pub fn kill_event_parser(input: &str) -> IResult<&str, KillEvent> {
-    let (input, target) = param_parse_with("against", subject_parser)(input)?;
+    let (input, target) = subject_parser(input)?;
     let (input, weapon) = param_parse("with")(input)?;
     let mut event = KillEvent {
         target,
@@ -100,4 +101,34 @@ pub fn kill_assist_event_parser(input: &str) -> IResult<&str, KillAssistEvent> {
         }
     }
     Ok(("", event))
+}
+
+#[derive(Debug)]
+pub struct SpawnEvent {
+    pub class: Option<Class>,
+}
+
+pub fn spawn_event_parser(input: &str) -> IResult<&str, SpawnEvent> {
+    let (input, class_str) = param_parse("as")(input)?;
+    Ok((
+        input,
+        SpawnEvent {
+            class: class_str.parse().ok(),
+        },
+    ))
+}
+
+#[derive(Debug)]
+pub struct RoleChangeEvent {
+    pub class: Option<Class>,
+}
+
+pub fn role_changed_event_parser(input: &str) -> IResult<&str, RoleChangeEvent> {
+    let (input, class_str) = param_parse("to")(input)?;
+    Ok((
+        input,
+        RoleChangeEvent {
+            class: class_str.parse().ok(),
+        },
+    ))
 }

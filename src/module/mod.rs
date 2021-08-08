@@ -3,6 +3,7 @@ use crate::event::GameEvent;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 pub use chat::{ChatHandler, ChatMessage, ChatType};
+pub use classstats::{ClassStat, ClassStatsHandler};
 pub use healspread::HealSpreadHandler;
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
@@ -10,6 +11,7 @@ pub use lobbysettings::{
 pub use medicstats::{MedicStats, MedicStatsHandler};
 
 mod chat;
+mod classstats;
 mod healspread;
 mod lobbysettings;
 mod medicstats;

@@ -1,12 +1,15 @@
 use crate::raw_event::RawSubject;
+use enum_iterator::IntoEnumIterator;
+use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
+use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 use steamid_ng::{AccountType, Instance, SteamID, Universe};
 use thiserror::Error;
 
-#[derive(Serialize, Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
+#[derive(Serialize, Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd, Hash)]
 pub enum Team {
     Red,
     Blue,
@@ -39,8 +42,118 @@ impl FromStr for Team {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, IntoEnumIterator, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Class {
+    Scout,
+    Soldier,
+    Pyro,
+    DemoMan,
+    HeavyWeapons,
+    Engineer,
+    Medic,
+    Sniper,
+    Spy,
+}
+
+impl Class {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Class::Scout => "scout",
+            Class::Soldier => "soldier",
+            Class::Pyro => "pyro",
+            Class::DemoMan => "demoman",
+            Class::HeavyWeapons => "heavyweapons",
+            Class::Engineer => "engineer",
+            Class::Medic => "medic",
+            Class::Sniper => "sniper",
+            Class::Spy => "spy",
+        }
+    }
+}
+
+impl FromStr for Class {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "scout" => Ok(Class::Scout),
+            "soldier" => Ok(Class::Soldier),
+            "pyro" => Ok(Class::Pyro),
+            "demoman" => Ok(Class::DemoMan),
+            "heavyweapons" => Ok(Class::HeavyWeapons),
+            "engineer" => Ok(Class::Engineer),
+            "medic" => Ok(Class::Medic),
+            "sniper" => Ok(Class::Sniper),
+            "spy" => Ok(Class::Spy),
+            _ => Err(()),
+        }
+    }
+}
+
+pub struct ClassMap<T>([T; 9]);
+
+impl<T> Index<Class> for ClassMap<T> {
+    type Output = T;
+
+    fn index(&self, index: Class) -> &Self::Output {
+        match index {
+            Class::Scout => &self.0[0],
+            Class::Soldier => &self.0[1],
+            Class::Pyro => &self.0[2],
+            Class::DemoMan => &self.0[3],
+            Class::HeavyWeapons => &self.0[4],
+            Class::Engineer => &self.0[5],
+            Class::Medic => &self.0[6],
+            Class::Sniper => &self.0[7],
+            Class::Spy => &self.0[8],
+        }
+    }
+}
+
+impl<T> IndexMut<Class> for ClassMap<T> {
+    fn index_mut(&mut self, index: Class) -> &mut Self::Output {
+        match index {
+            Class::Scout => &mut self.0[0],
+            Class::Soldier => &mut self.0[1],
+            Class::Pyro => &mut self.0[2],
+            Class::DemoMan => &mut self.0[3],
+            Class::HeavyWeapons => &mut self.0[4],
+            Class::Engineer => &mut self.0[5],
+            Class::Medic => &mut self.0[6],
+            Class::Sniper => &mut self.0[7],
+            Class::Spy => &mut self.0[8],
+        }
+    }
+}
+
+impl<T> Serialize for ClassMap<T>
+where
+    T: Serialize + Default + PartialEq,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(None)?;
+        for class in Class::into_enum_iter() {
+            let stats = &self[class];
+            if stats != &T::default() {
+                map.serialize_entry(&class, stats)?;
+            }
+        }
+        map.end()
+    }
+}
+
+impl<T: Default> Default for ClassMap<T> {
+    fn default() -> Self {
+        ClassMap(<[T; 9]>::default())
+    }
+}
+
 /// Optimized subject id
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd, Hash)]
 pub enum SubjectId {
     Player(u32),
     Team(Team),
@@ -54,7 +167,7 @@ impl SubjectId {
         match self {
             SubjectId::Player(account_id) => Some(SteamID::new(
                 *account_id,
-                Instance::All,
+                Instance::Desktop,
                 AccountType::Individual,
                 Universe::Public,
             )),

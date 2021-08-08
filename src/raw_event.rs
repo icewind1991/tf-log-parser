@@ -1,3 +1,4 @@
+use crate::{SubjectError, SubjectId};
 use chrono::{DateTime, TimeZone, Utc};
 use enum_iterator::IntoEnumIterator;
 use nom::branch::alt;
@@ -5,7 +6,7 @@ use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::{digit1, one_of};
 use nom::error::{make_error, ErrorKind};
 use nom::{Finish, IResult};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
 
 /// Event that has only been minimally parsed.
@@ -124,6 +125,10 @@ impl<'a> RawSubject<'a> {
             RawSubject::Console => "Console",
             RawSubject::World => "World",
         }
+    }
+
+    pub fn id(&self) -> Result<SubjectId, SubjectError> {
+        self.try_into()
     }
 }
 
@@ -266,7 +271,7 @@ impl RawEventType {
     pub fn tag(self) -> &'static str {
         match self {
             RawEventType::JoinedTeam => r#"joined team"#,
-            RawEventType::ChangedRole => r#"changed role to"#,
+            RawEventType::ChangedRole => r#"changed role"#,
             RawEventType::ShotFired => r#"triggered "shot_fired""#,
             RawEventType::ShotHit => r#"triggered "shot_hit""#,
             RawEventType::Damage => r#"triggered "damage""#,
@@ -277,7 +282,7 @@ impl RawEventType {
             RawEventType::Suicide => r#"committed suicide"#,
             RawEventType::Domination => r#"triggered "domination""#,
             RawEventType::Revenge => r#"triggered "revenge""#,
-            RawEventType::Spawned => r#"spawned as"#,
+            RawEventType::Spawned => r#"spawned"#,
             RawEventType::SayTeam => r#"say_team"#,
             RawEventType::Say => r#"say"#,
             RawEventType::EmptyUber => r#"triggered "empty_uber""#,

@@ -1,7 +1,10 @@
+mod game;
 mod medic;
 mod player;
 
+use crate::event::game::{RoundLengthEvent, RoundWinEvent};
 use crate::{RawEvent, RawEventType};
+pub use game::*;
 pub use medic::*;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::{alpha1, digit1};
@@ -59,6 +62,12 @@ pub enum GameEvent<'a> {
     FirstHeal(FirstHealEvent),
     ChargeReady,
     MedicDeath(MedicDeathEvent),
+    Spawned(SpawnEvent),
+    RoleChange(RoleChangeEvent),
+    RoundStart,
+    RoundWin(RoundWinEvent<'a>),
+    RoundLength(RoundLengthEvent),
+    RoundOverTime,
 }
 
 impl<'a> GameEvent<'a> {
@@ -100,6 +109,20 @@ impl<'a> GameEvent<'a> {
             RawEventType::MedicDeath => {
                 GameEvent::MedicDeath(medic_death_event_parser(raw.params).with_type(raw.ty)?)
             }
+            RawEventType::Spawned => {
+                GameEvent::Spawned(spawn_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::ChangedRole => {
+                GameEvent::RoleChange(role_changed_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::RoundStart => GameEvent::RoundStart,
+            RawEventType::RoundLength => {
+                GameEvent::RoundLength(round_length_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::RoundWin => {
+                GameEvent::RoundWin(round_win_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::RoundOvertime => GameEvent::RoundOverTime,
             _ => {
                 todo!("{:?} not parsed yet", raw.ty);
             }
@@ -161,6 +184,7 @@ fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<&'a str, T>>(
     parser: P,
 ) -> impl Fn(&'a str) -> IResult<&'a str, T> {
     move |input: &str| {
+        let (input, _) = opt(tag(" "))(input)?;
         let (input, open_tag) = opt(tag("("))(input)?;
 
         let (input, _) = tag(key)(input)?;

@@ -1,7 +1,7 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
-use crate::module::{ChatHandler, HealSpreadHandler, MedicStatsHandler};
+use crate::module::{ChatHandler, ClassStatsHandler, HealSpreadHandler, MedicStatsHandler};
 use crate::raw_event::RawSubject;
 use chrono::{DateTime, Utc};
 pub use event::GameEvent;
@@ -103,4 +103,5 @@ handler!(LogHandler {
     chat: ChatHandler,
     heal_spread: HealSpreadHandler,
     medic_stats: MedicStatsHandler,
+    class_stats: ClassStatsHandler,
 });
