@@ -182,11 +182,20 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
 
     fn try_from(raw: &RawSubject) -> Result<Self, Self::Error> {
         Ok(match raw {
-            RawSubject::Player { steam_id, .. } => SubjectId::Player(
-                SteamID::from_steam3(steam_id)
-                    .map_err(|_| SubjectError::InvalidSteamId)?
-                    .account_id(),
-            ),
+            RawSubject::Player { steam_id, .. } => {
+                if let Some(raw_account_id) = steam_id
+                    .strip_prefix("[U:1:")
+                    .and_then(|s| s.strip_suffix(']'))
+                {
+                    SubjectId::Player(
+                        raw_account_id
+                            .parse()
+                            .map_err(|_| SubjectError::InvalidSteamId)?,
+                    )
+                } else {
+                    return Err(SubjectError::InvalidSteamId);
+                }
+            }
             RawSubject::Team(team) => {
                 SubjectId::Team(team.parse().map_err(|_| SubjectError::InvalidTeam)?)
             }
