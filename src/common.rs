@@ -2,6 +2,7 @@ use crate::raw_event::RawSubject;
 use enum_iterator::IntoEnumIterator;
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
+use std::cmp::Ordering;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
 use std::ops::{Index, IndexMut};
@@ -248,6 +249,18 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
 /// Steam id formatted as steamid3 when serialized
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SteamId3(pub SteamID);
+
+impl PartialOrd<Self> for SteamId3 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        (u64::from(self.0)).partial_cmp(&u64::from(other.0))
+    }
+}
+
+impl Ord for SteamId3 {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (u64::from(self.0)).cmp(&u64::from(other.0))
+    }
+}
 
 impl From<SteamID> for SteamId3 {
     fn from(id: SteamID) -> Self {

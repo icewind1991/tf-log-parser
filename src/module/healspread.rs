@@ -3,14 +3,14 @@ use crate::event::GameEvent;
 use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::convert::TryFrom;
 
 #[derive(Default)]
-pub struct HealSpreadHandler(HashMap<SteamId3, HashMap<SteamId3, u32>>);
+pub struct HealSpreadHandler(BTreeMap<SteamId3, BTreeMap<SteamId3, u32>>);
 
 impl EventHandler for HealSpreadHandler {
-    type Output = HashMap<SteamId3, HashMap<SteamId3, u32>>;
+    type Output = BTreeMap<SteamId3, BTreeMap<SteamId3, u32>>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Healed)

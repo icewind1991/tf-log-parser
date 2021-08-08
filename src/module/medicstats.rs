@@ -4,7 +4,7 @@ use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
 use crate::SubjectMap;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use thiserror::Error;
 
 #[derive(Default)]
@@ -62,10 +62,10 @@ impl From<MedicStatsBuilder> for MedicStats {
 pub struct InvalidMedicEvent(String);
 
 #[derive(Default)]
-pub struct MedicStatsHandler(HashMap<SteamId3, MedicStatsBuilder>);
+pub struct MedicStatsHandler(BTreeMap<SteamId3, MedicStatsBuilder>);
 
 impl EventHandler for MedicStatsHandler {
-    type Output = HashMap<SteamId3, MedicStats>;
+    type Output = BTreeMap<SteamId3, MedicStats>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(

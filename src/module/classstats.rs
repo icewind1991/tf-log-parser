@@ -4,7 +4,7 @@ use crate::module::EventHandler;
 use crate::raw_event::{RawEventType, RawSubject};
 use crate::SubjectMap;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::ops::{Add, AddAssign};
 
 #[derive(Debug, Serialize, Default, PartialEq)]
@@ -40,8 +40,8 @@ impl AddAssign for ClassStat {
 #[derive(Default)]
 pub struct ClassStatsHandler {
     active: bool,
-    classes: HashMap<SubjectId, Class>,
-    stats: HashMap<SteamId3, ClassMap<ClassStat>>,
+    classes: BTreeMap<SubjectId, Class>,
+    stats: BTreeMap<SteamId3, ClassMap<ClassStat>>,
 }
 
 impl ClassStatsHandler {
@@ -65,7 +65,7 @@ impl ClassStatsHandler {
 }
 
 impl EventHandler for ClassStatsHandler {
-    type Output = HashMap<SteamId3, ClassMap<ClassStat>>;
+    type Output = BTreeMap<SteamId3, ClassMap<ClassStat>>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(
