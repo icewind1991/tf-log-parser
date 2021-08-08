@@ -32,7 +32,6 @@ impl EventHandler for HighestDamageHandler {
         }) = event
         {
             let damage = damage.get();
-            // note that we leave the name empty for now to prevent needles cloning
             match &mut self.current {
                 Some((_, current_damage)) if damage > *current_damage => {
                     self.current = Some((subject, damage))

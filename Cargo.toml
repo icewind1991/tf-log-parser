@@ -1,7 +1,11 @@
 [package]
 name = "tf-log-parser"
 version = "0.1.0"
+authors = ["Robin Appelman <robin@icewind.nl>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+exclude = [ "test_data" ]
+repository = "https://github.com/icewind1991/tf-log-parser"
 
 [dependencies]
 steamid-ng = "1"
