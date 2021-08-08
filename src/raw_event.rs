@@ -2,7 +2,7 @@ use crate::{SubjectError, SubjectId};
 use chrono::{DateTime, TimeZone, Utc};
 use enum_iterator::IntoEnumIterator;
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while};
+use nom::bytes::complete::{tag, tag_no_case, take_while};
 use nom::character::complete::{digit1, one_of};
 use nom::error::{make_error, ErrorKind};
 use nom::{Finish, IResult};
@@ -104,12 +104,7 @@ fn date_parser(input: &str) -> IResult<&str, RawDate> {
 
 #[derive(Debug, PartialEq)]
 pub enum RawSubject<'a> {
-    Player {
-        name: &'a str,
-        user_id: &'a str,
-        steam_id: &'a str,
-        team: &'a str,
-    },
+    Player(&'a str),
     Team(&'a str),
     System(&'a str),
     Console,
@@ -117,16 +112,6 @@ pub enum RawSubject<'a> {
 }
 
 impl<'a> RawSubject<'a> {
-    pub fn name(&self) -> &'a str {
-        match self {
-            RawSubject::Player { name, .. } => name,
-            RawSubject::Team(team) => team,
-            RawSubject::System(system) => system,
-            RawSubject::Console => "Console",
-            RawSubject::World => "World",
-        }
-    }
-
     pub fn id(&self) -> Result<SubjectId, SubjectError> {
         self.try_into()
     }
@@ -145,7 +130,7 @@ fn subject_parser_console(input: &str) -> IResult<&str, RawSubject> {
 fn subject_parser_team(input: &str) -> IResult<&str, RawSubject> {
     let (input, _) = tag(r#"Team ""#)(input)?;
 
-    let (input, team) = alt((tag("Red"), tag("Blue")))(input)?;
+    let (input, team) = alt((tag_no_case("red"), tag_no_case("blue")))(input)?;
 
     let (input, _) = one_of("\"")(input)?;
     Ok((input, RawSubject::Team(team)))
@@ -165,9 +150,7 @@ fn subject_parser_system(input: &str) -> IResult<&str, RawSubject> {
     Ok((input, RawSubject::System(name)))
 }
 
-fn subject_parser_player(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = one_of("\"")(input)?;
-
+pub fn split_player_subject(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
     let (input, name) = take_while(|c| c != '<')(input)?;
 
     let (input, _) = one_of("<")(input)?;
@@ -182,25 +165,25 @@ fn subject_parser_player(input: &str) -> IResult<&str, RawSubject> {
     let (input, team) = take_while(|c| c != '>')(input)?;
     let (input, _) = one_of(">")(input)?;
 
+    Ok((input, (name, user_id, steam_id, team)))
+}
+
+fn subject_parser_player(input: &str) -> IResult<&str, RawSubject> {
     let (input, _) = one_of("\"")(input)?;
 
-    Ok((
-        input,
-        RawSubject::Player {
-            name,
-            user_id,
-            steam_id,
-            team,
-        },
-    ))
+    let (input, subject) = take_while(|c| c != '"')(input)?;
+
+    let (input, _) = one_of("\"")(input)?;
+
+    Ok((input, RawSubject::Player(subject)))
 }
 
 pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
     alt((
         subject_parser_console,
+        subject_parser_player,
         subject_parser_world,
         subject_parser_team,
-        subject_parser_player,
         subject_parser_system,
     ))(input)
 }
@@ -338,7 +321,6 @@ fn event_type_parser(input: &str) -> IResult<&str, RawEventType> {
             return Ok((input, event_type));
         }
     }
-    dbg!(input);
     Err(nom::Err::Error(make_error(input, ErrorKind::NoneOf)))
 }
 
@@ -357,14 +339,9 @@ fn test_parse_raw() {
                 minutes: "13",
                 seconds: "57",
             },
-            subject: RawSubject::Player {
-                name: "makxbi",
-                user_id: "27",
-                steam_id: "[U:1:40364391]",
-                team: "Red",
-            },
+            subject: RawSubject::Player("makxbi<27><[U:1:40364391]><Red>"),
             ty: RawEventType::ChangedRole,
-            params: r#""sniper""#,
+            params: r#"to "sniper""#,
         },
         raw
     );

@@ -1,4 +1,4 @@
-use crate::raw_event::RawSubject;
+use crate::raw_event::{split_player_subject, RawSubject};
 use enum_iterator::IntoEnumIterator;
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
@@ -182,10 +182,12 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
 
     fn try_from(raw: &RawSubject) -> Result<Self, Self::Error> {
         Ok(match raw {
-            RawSubject::Player { steam_id, .. } => {
-                if let Some(raw_account_id) = steam_id
-                    .strip_prefix("[U:1:")
-                    .and_then(|s| s.strip_suffix(']'))
+            RawSubject::Player(raw) => {
+                if let Some(raw_account_id) = raw
+                    .rsplit_once(":")
+                    .map(|(_, s)| s)
+                    .and_then(|s| s.split_once(']'))
+                    .map(|(s, _)| s)
                 {
                     SubjectId::Player(
                         raw_account_id
@@ -235,18 +237,17 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
 
     fn try_from(raw: &RawSubject<'_>) -> Result<Self, Self::Error> {
         Ok(match raw {
-            RawSubject::Player {
-                name,
-                user_id,
-                steam_id,
-                team,
-            } => SubjectData::Player {
-                name: name.to_string(),
-                user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
-                steam_id: SteamID::from_steam3(steam_id)
-                    .map_err(|_| SubjectError::InvalidSteamId)?,
-                team: team.parse().map_err(|_| SubjectError::InvalidTeam)?,
-            },
+            RawSubject::Player(raw) => {
+                let (_, (name, user_id, steam_id, team)) =
+                    split_player_subject(raw).map_err(|_| SubjectError::InvalidUserId)?;
+                SubjectData::Player {
+                    name: name.to_string(),
+                    user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
+                    steam_id: SteamID::from_steam3(steam_id)
+                        .map_err(|_| SubjectError::InvalidSteamId)?,
+                    team: team.parse().map_err(|_| SubjectError::InvalidTeam)?,
+                }
+            }
             RawSubject::Team(team) => SubjectData::Team(team.parse().unwrap()),
             RawSubject::System(name) => SubjectData::System(name.to_string()),
             RawSubject::Console => SubjectData::Console,
