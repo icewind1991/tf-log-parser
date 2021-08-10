@@ -25,7 +25,7 @@ pub struct ChatMessage {
 impl ChatMessage {
     fn from_bare(bare: BareChatMessage, subjects: &SubjectMap) -> Self {
         let (name, steam_id) = match &subjects[bare.subject] {
-            SubjectData::Player { name, steam_id, .. } => (name.clone(), steam_id.clone()),
+            (SubjectData::Player { name, steam_id, .. }, _) => (name.clone(), steam_id.clone()),
             _ => {
                 unreachable!("only player messages are added");
             }
@@ -50,13 +50,21 @@ pub enum ChatType {
 pub struct ChatHandler(Vec<BareChatMessage>);
 
 impl EventHandler for ChatHandler {
-    type Output = Vec<ChatMessage>;
+    type GlobalOutput = Vec<ChatMessage>;
+    type PerSubjectData = ();
+    type PerSubjectOutput = ();
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::SayTeam | RawEventType::Say)
     }
 
-    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
+    fn handle(
+        &mut self,
+        time: u32,
+        subject: SubjectId,
+        _subject_data: &mut Self::PerSubjectData,
+        event: &GameEvent,
+    ) {
         if !matches!(subject, SubjectId::Player(_)) {
             return;
         }
@@ -77,10 +85,18 @@ impl EventHandler for ChatHandler {
         }
     }
 
-    fn finish(self, subjects: &SubjectMap) -> Self::Output {
+    fn finish_global(self, subjects: &SubjectMap) -> Self::GlobalOutput {
         self.0
             .into_iter()
             .map(|bare| ChatMessage::from_bare(bare, subjects))
             .collect()
+    }
+
+    fn finish_per_subject(
+        &self,
+        _subject: &SubjectData,
+        data: Self::PerSubjectData,
+    ) -> Self::PerSubjectOutput {
+        data
     }
 }

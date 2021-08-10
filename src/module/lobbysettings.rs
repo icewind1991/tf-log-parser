@@ -2,7 +2,7 @@ use crate::common::SubjectId;
 use crate::event::GameEvent;
 use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
-use crate::SubjectMap;
+use crate::{SubjectData, SubjectMap};
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::{Serialize, Serializer};
 use std::num::ParseIntError;
@@ -197,13 +197,21 @@ impl LobbySettingsHandler {
 }
 
 impl EventHandler for LobbySettingsHandler {
-    type Output = Result<Option<Settings>, LobbySettingsError>;
+    type GlobalOutput = Result<Option<Settings>, LobbySettingsError>;
+    type PerSubjectData = ();
+    type PerSubjectOutput = ();
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Say)
     }
 
-    fn handle(&mut self, _time: u32, subject: SubjectId, event: &GameEvent) {
+    fn handle(
+        &mut self,
+        _time: u32,
+        subject: SubjectId,
+        _subject_data: &mut Self::PerSubjectData,
+        event: &GameEvent,
+    ) {
         if !matches!(subject, SubjectId::Console) {
             return;
         }
@@ -214,12 +222,20 @@ impl EventHandler for LobbySettingsHandler {
         }
     }
 
-    fn finish(self, _subjects: &SubjectMap) -> Self::Output {
+    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
         match self {
             LobbySettingsHandler::NotAvailable => Ok(None),
             LobbySettingsHandler::Active(settings) => Ok(Some(settings)),
             LobbySettingsHandler::Err(e) => Err(e),
         }
+    }
+
+    fn finish_per_subject(
+        &self,
+        _subject: &SubjectData,
+        data: Self::PerSubjectData,
+    ) -> Self::PerSubjectOutput {
+        data
     }
 }
 

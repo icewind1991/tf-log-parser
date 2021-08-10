@@ -208,7 +208,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SubjectData {
     Player {
         name: String,

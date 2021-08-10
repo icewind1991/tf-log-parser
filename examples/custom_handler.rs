@@ -19,7 +19,7 @@ struct HighestDamageHandler {
 }
 
 impl EventHandler for HighestDamageHandler {
-    type Output = Option<HighestDamage>;
+    type GlobalOutput = Option<HighestDamage>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Damage)
@@ -42,7 +42,7 @@ impl EventHandler for HighestDamageHandler {
         }
     }
 
-    fn finish(self, subjects: &SubjectMap) -> Self::Output {
+    fn finish_global(self, subjects: &SubjectMap) -> Self::GlobalOutput {
         self.current.map(|(subject, damage)| {
             let user = match &subjects[subject] {
                 SubjectData::Player { name, .. } => name.clone(),

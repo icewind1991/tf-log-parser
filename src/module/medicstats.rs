@@ -1,14 +1,13 @@
-use crate::common::{SteamId3, SubjectId};
+use crate::common::SubjectId;
 use crate::event::GameEvent;
 use crate::module::EventHandler;
 use crate::raw_event::RawEventType;
-use crate::SubjectMap;
+use crate::{SubjectData, SubjectMap};
 use serde::Serialize;
-use std::collections::BTreeMap;
 use thiserror::Error;
 
 #[derive(Default)]
-struct MedicStatsBuilder {
+pub struct MedicStatsBuilder {
     advantages_lost: u32,
     biggest_advantage_lost: f32,
     near_full_charge_death: u32,
@@ -62,10 +61,12 @@ impl From<MedicStatsBuilder> for MedicStats {
 pub struct InvalidMedicEvent(String);
 
 #[derive(Default)]
-pub struct MedicStatsHandler(BTreeMap<SteamId3, MedicStatsBuilder>);
+pub struct MedicStatsHandler;
 
 impl EventHandler for MedicStatsHandler {
-    type Output = BTreeMap<SteamId3, MedicStats>;
+    type GlobalOutput = ();
+    type PerSubjectData = MedicStatsBuilder;
+    type PerSubjectOutput = MedicStats;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(
@@ -79,66 +80,65 @@ impl EventHandler for MedicStatsHandler {
         )
     }
 
-    fn handle(&mut self, time: u32, subject: SubjectId, event: &GameEvent) {
-        let healer_steam_id = if let Some(steam_id) = subject.steam_id() {
-            steam_id
-        } else {
-            return;
-        };
+    fn handle(
+        &mut self,
+        time: u32,
+        _subject: SubjectId,
+        subject_data: &mut Self::PerSubjectData,
+        event: &GameEvent,
+    ) {
         match event {
             GameEvent::ChargeEnded(end) => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
-                builder.total_uber_length += end.duration.unwrap_or_default();
-                builder.last_uber_end = time;
+                subject_data.total_uber_length += end.duration.unwrap_or_default();
+                subject_data.last_uber_end = time;
             }
             GameEvent::ChargeDeployed(_deployed) => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
-                builder.charge_count += 1;
+                subject_data.charge_count += 1;
             }
             GameEvent::AdvantageLost(lost) => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
-                builder.advantages_lost += 1;
+                subject_data.advantages_lost += 1;
                 let time = lost.time.unwrap_or_default();
-                if time > builder.biggest_advantage_lost {
-                    builder.biggest_advantage_lost = time;
+                if time > subject_data.biggest_advantage_lost {
+                    subject_data.biggest_advantage_lost = time;
                 }
             }
             GameEvent::FirstHeal(first) => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
-                builder.total_time_before_healing += first.time.unwrap_or_default();
-                builder.start_healing_count += 1;
-                builder.last_build_start = time;
+                subject_data.total_time_before_healing += first.time.unwrap_or_default();
+                subject_data.start_healing_count += 1;
+                subject_data.last_build_start = time;
             }
             GameEvent::ChargeReady => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
-                if builder.last_build_start > 0 {
-                    let build_time = time - builder.last_build_start;
-                    builder.last_build_start = 0;
-                    builder.total_time_to_build += build_time;
-                    builder.uber_build_count += 1;
+                if subject_data.last_build_start > 0 {
+                    let build_time = time - subject_data.last_build_start;
+                    subject_data.last_build_start = 0;
+                    subject_data.total_time_to_build += build_time;
+                    subject_data.uber_build_count += 1;
                 }
             }
             GameEvent::MedicDeath(death) => {
-                let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
                 let charge = death.charge.unwrap_or_default();
                 if charge >= 95 && charge < 100 {
-                    builder.near_full_charge_death += 1;
+                    subject_data.near_full_charge_death += 1;
                 } else if charge >= 100 {
-                    builder.drops += 1;
+                    subject_data.drops += 1;
                 }
-                if time - builder.last_uber_end <= 10 {
-                    builder.deaths_after_uber += 1;
+                if time - subject_data.last_uber_end <= 10 {
+                    subject_data.deaths_after_uber += 1;
                 }
             }
             _ => {}
         }
     }
 
-    fn finish(self, _subjects: &SubjectMap) -> Self::Output {
-        self.0
-            .into_iter()
-            .filter(|(_, builder)| builder.start_healing_count > 0)
-            .map(|(steam_id, builder)| (steam_id, builder.into()))
-            .collect()
+    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
+        ()
+    }
+
+    fn finish_per_subject(
+        &self,
+        _subject: &SubjectData,
+        data: Self::PerSubjectData,
+    ) -> Self::PerSubjectOutput {
+        data.into()
     }
 }

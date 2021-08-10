@@ -2,7 +2,7 @@ use crate::common::{Class, ClassMap, SteamId3, SubjectId};
 use crate::event::{DamageEvent, GameEvent, RoleChangeEvent, SpawnEvent};
 use crate::module::EventHandler;
 use crate::raw_event::{RawEventType, RawSubject};
-use crate::SubjectMap;
+use crate::{SubjectData, SubjectMap};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::ops::{Add, AddAssign};
@@ -65,7 +65,9 @@ impl ClassStatsHandler {
 }
 
 impl EventHandler for ClassStatsHandler {
-    type Output = BTreeMap<SteamId3, ClassMap<ClassStat>>;
+    type GlobalOutput = ();
+    type PerSubjectData = ClassMap<ClassStat>;
+    type PerSubjectOutput = ClassMap<ClassStat>;
 
     fn does_handle(&self, ty: RawEventType) -> bool {
         matches!(
@@ -80,7 +82,13 @@ impl EventHandler for ClassStatsHandler {
         )
     }
 
-    fn handle(&mut self, _time: u32, subject: SubjectId, event: &GameEvent) {
+    fn handle(
+        &mut self,
+        _time: u32,
+        subject: SubjectId,
+        _subject_data: &mut Self::PerSubjectData,
+        event: &GameEvent,
+    ) {
         match event {
             GameEvent::Spawned(SpawnEvent { class: Some(class) })
             | GameEvent::RoleChange(RoleChangeEvent { class: Some(class) }) => {
@@ -140,7 +148,15 @@ impl EventHandler for ClassStatsHandler {
         }
     }
 
-    fn finish(self, _subjects: &SubjectMap) -> Self::Output {
-        self.stats
+    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
+        ()
+    }
+
+    fn finish_per_subject(
+        &self,
+        _subject: &SubjectData,
+        data: Self::PerSubjectData,
+    ) -> Self::PerSubjectOutput {
+        data
     }
 }

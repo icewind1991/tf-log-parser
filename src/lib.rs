@@ -2,14 +2,13 @@ pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
 use crate::module::{ChatHandler, ClassStatsHandler, HealSpreadHandler, MedicStatsHandler};
-use crate::raw_event::RawSubject;
+use crate::subjectmap::SubjectMap;
 use chrono::{DateTime, Utc};
 pub use event::GameEvent;
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
-use std::ops::Index;
 use thiserror::Error;
 
 mod common;
@@ -17,6 +16,7 @@ pub mod event;
 #[macro_use]
 pub mod module;
 mod raw_event;
+mod subjectmap;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -39,34 +39,27 @@ impl From<nom::error::Error<&'_ str>> for Error {
     }
 }
 
-#[derive(Default)]
-pub struct SubjectMap(BTreeMap<SubjectId, SubjectData>);
-
-impl Index<SubjectId> for SubjectMap {
-    type Output = SubjectData;
-
-    fn index(&self, index: SubjectId) -> &Self::Output {
-        self.0
-            .get(&index)
-            .expect("subject id created without matching subject data")
-    }
-}
-
-impl SubjectMap {
-    pub fn insert(&mut self, raw: &RawSubject) -> Result<SubjectId, SubjectError> {
-        let id = raw.try_into()?;
-        if !self.0.contains_key(&id) {
-            self.0.insert(id, raw.try_into()?);
-        }
-        Ok(id)
-    }
-}
-
-pub fn parse(log: &str) -> Result<<LogHandler as EventHandler>::Output, Error> {
+pub fn parse(
+    log: &str,
+) -> Result<
+    (
+        <LogHandler as EventHandler>::GlobalOutput,
+        BTreeMap<SteamId3, <LogHandler as EventHandler>::PerSubjectOutput>,
+    ),
+    Error,
+> {
     parse_with_handler::<LogHandler>(log)
 }
 
-pub fn parse_with_handler<Handler: EventHandler>(log: &str) -> Result<Handler::Output, Error> {
+pub fn parse_with_handler<Handler: EventHandler>(
+    log: &str,
+) -> Result<
+    (
+        Handler::GlobalOutput,
+        BTreeMap<SteamId3, Handler::PerSubjectOutput>,
+    ),
+    Error,
+> {
     let events = log
         .lines()
         .filter(|line| line.starts_with("L "))
@@ -75,7 +68,7 @@ pub fn parse_with_handler<Handler: EventHandler>(log: &str) -> Result<Handler::O
     let mut handler = Handler::default();
 
     let mut start_time: Option<DateTime<Utc>> = None;
-    let mut subjects = SubjectMap::default();
+    let mut subjects = SubjectMap::<Handler::PerSubjectData>::default();
 
     for event_res in events {
         let raw_event = event_res?;
@@ -91,12 +84,26 @@ pub fn parse_with_handler<Handler: EventHandler>(log: &str) -> Result<Handler::O
             };
             if should_handle {
                 let event = GameEvent::parse(&raw_event)?;
-                handler.handle(match_time, subjects.insert(&raw_event.subject)?, &event);
+                let (subject, data) = subjects.insert(&raw_event.subject)?;
+                handler.handle(match_time, subject, data, &event);
             }
         }
     }
 
-    Ok(handler.finish(&subjects))
+    let just_subjects = subjects.to_just_subjects();
+    let per_player = subjects
+        .into_iter()
+        .filter_map(|(id, subject, data)| Some((id.steam_id()?, subject, data)))
+        .map(|(steam_id, subject, data)| {
+            (
+                SteamId3(steam_id),
+                handler.finish_per_subject(&subject, data),
+            )
+        })
+        .collect();
+    let global = handler.finish_global(&just_subjects);
+
+    Ok((global, per_player))
 }
 
 handler!(LogHandler {
