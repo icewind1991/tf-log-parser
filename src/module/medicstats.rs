@@ -121,12 +121,12 @@ impl EventHandler for MedicStatsHandler {
             GameEvent::MedicDeath(death) => {
                 let builder = self.0.entry(SteamId3(healer_steam_id)).or_default();
                 let charge = death.charge.unwrap_or_default();
-                if charge > 95 && charge < 100 {
+                if charge >= 95 && charge < 100 {
                     builder.near_full_charge_death += 1;
                 } else if charge >= 100 {
                     builder.drops += 1;
                 }
-                if time - builder.last_uber_end <= 20 {
+                if time - builder.last_uber_end <= 10 {
                     builder.deaths_after_uber += 1;
                 }
             }
