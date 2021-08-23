@@ -4,8 +4,9 @@ use main_error::MainError;
 use std::env::args;
 use std::fs;
 use tf_log_parser::event::DamageEvent;
+use tf_log_parser::module::GlobalData;
 use tf_log_parser::{
-    parse_with_handler, EventHandler, GameEvent, RawEventType, SubjectData, SubjectId, SubjectMap,
+    parse_with_handler, EventMeta, GameEvent, RawEventType, SubjectData, SubjectId, SubjectMap,
 };
 
 struct HighestDamage {
@@ -18,14 +19,14 @@ struct HighestDamageHandler {
     current: Option<(SubjectId, u32)>,
 }
 
-impl EventHandler for HighestDamageHandler {
-    type GlobalOutput = Option<HighestDamage>;
+impl GlobalData for HighestDamageHandler {
+    type Output = Option<HighestDamage>;
 
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Damage)
     }
 
-    fn handle(&mut self, _time: u32, subject: SubjectId, event: &GameEvent) {
+    fn handle_event(&mut self, _meta: &EventMeta, subject: SubjectId, event: &GameEvent) {
         if let GameEvent::Damage(DamageEvent {
             damage: Some(damage),
             ..
@@ -42,9 +43,9 @@ impl EventHandler for HighestDamageHandler {
         }
     }
 
-    fn finish_global(self, subjects: &SubjectMap) -> Self::GlobalOutput {
+    fn finish(self, subjects: &SubjectMap) -> Self::Output {
         self.current.map(|(subject, damage)| {
-            let user = match &subjects[subject] {
+            let user = match subjects.subject(subject) {
                 SubjectData::Player { name, .. } => name.clone(),
                 _ => {
                     panic!("A non player did the most damage?")
@@ -59,8 +60,9 @@ fn main() -> Result<(), MainError> {
     let path = args().skip(1).next().expect("No path provided");
     let content = fs::read_to_string(path)?;
 
-    let HighestDamage { user, damage } =
-        parse_with_handler::<HighestDamageHandler>(&content)?.expect("nobody did any damage?");
+    let HighestDamage { user, damage } = parse_with_handler::<HighestDamageHandler>(&content)?
+        .0
+        .expect("nobody did any damage?");
 
     println!("highest damage was {} done by {}", user, damage);
     Ok(())

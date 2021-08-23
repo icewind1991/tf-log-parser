@@ -1,75 +1,42 @@
-use crate::common::{Class, ClassMap, SteamId3, SubjectId};
+use crate::common::{Class, ClassMap, SubjectId};
 use crate::event::{DamageEvent, GameEvent, RoleChangeEvent, SpawnEvent};
 use crate::module::EventHandler;
 use crate::raw_event::{RawEventType, RawSubject};
-use crate::{SubjectData, SubjectMap};
+use crate::{EventMeta, SubjectData, SubjectMap};
 use serde::Serialize;
 use std::collections::BTreeMap;
-use std::ops::{Add, AddAssign};
 
 #[derive(Debug, Serialize, Default, PartialEq)]
-pub struct ClassStat {
-    kills: u8,
-    deaths: u8,
-    assists: u8,
-    damage: u16,
-}
-
-impl Add for ClassStat {
-    type Output = ClassStat;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        ClassStat {
-            kills: self.kills + rhs.kills,
-            deaths: self.deaths + rhs.deaths,
-            assists: self.assists + rhs.assists,
-            damage: self.damage + rhs.damage,
-        }
-    }
-}
-
-impl AddAssign for ClassStat {
-    fn add_assign(&mut self, rhs: Self) {
-        self.kills += rhs.kills;
-        self.deaths += rhs.deaths;
-        self.assists += rhs.assists;
-        self.damage += rhs.damage;
-    }
+pub struct ClassStats {
+    kills: ClassMap<u8>,
+    deaths: ClassMap<u8>,
+    assists: ClassMap<u8>,
+    damage: ClassMap<u16>,
 }
 
 #[derive(Default)]
 pub struct ClassStatsHandler {
     active: bool,
     classes: BTreeMap<SubjectId, Class>,
-    stats: BTreeMap<SteamId3, ClassMap<ClassStat>>,
+    deaths: BTreeMap<SubjectId, ClassMap<u8>>,
 }
 
 impl ClassStatsHandler {
-    fn handle_stats(&mut self, subject: SubjectId, target: &RawSubject, stats: ClassStat) {
-        if let Ok(target) = target.id() {
-            self.handle_stats_id(subject, target, stats)
-        }
-    }
-
-    fn handle_stats_id(&mut self, subject: SubjectId, target: SubjectId, stats: ClassStat) {
-        let subject = if let Some(steam_id) = subject.steam_id() {
-            steam_id
-        } else {
-            return;
-        };
-
-        if let Some(target_class) = self.classes.get(&target) {
-            self.stats.entry(SteamId3(subject)).or_default()[*target_class] += stats;
-        }
+    fn get_class(&self, subject: &RawSubject) -> Option<Class> {
+        subject
+            .id()
+            .ok()
+            .and_then(|id| self.classes.get(&id))
+            .copied()
     }
 }
 
 impl EventHandler for ClassStatsHandler {
     type GlobalOutput = ();
-    type PerSubjectData = ClassMap<ClassStat>;
-    type PerSubjectOutput = ClassMap<ClassStat>;
+    type PerSubjectData = ClassStats;
+    type PerSubjectOutput = ClassStats;
 
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(
             ty,
             RawEventType::Killed
@@ -84,9 +51,9 @@ impl EventHandler for ClassStatsHandler {
 
     fn handle(
         &mut self,
-        _time: u32,
+        _meta: &EventMeta,
         subject: SubjectId,
-        _subject_data: &mut Self::PerSubjectData,
+        subject_data: &mut Self::PerSubjectData,
         event: &GameEvent,
     ) {
         match event {
@@ -101,48 +68,28 @@ impl EventHandler for ClassStatsHandler {
                 self.active = false;
             }
             GameEvent::Kill(kill) if self.active => {
-                self.handle_stats(
-                    subject,
-                    &kill.target,
-                    ClassStat {
-                        kills: 1,
-                        ..Default::default()
-                    },
-                );
+                if let Some(target_class) = self.get_class(&kill.target) {
+                    subject_data.kills[target_class] += 1;
+                }
                 if let Ok(target) = kill.target.id() {
-                    self.handle_stats_id(
-                        target,
-                        subject,
-                        ClassStat {
-                            deaths: 1,
-                            ..Default::default()
-                        },
-                    );
+                    if let Some(subject_class) = self.classes.get(&subject) {
+                        self.deaths.entry(target).or_default()[*subject_class] += 1;
+                    }
                 }
             }
-            GameEvent::KillAssist(kill) if self.active => {
-                self.handle_stats(
-                    subject,
-                    &kill.target,
-                    ClassStat {
-                        assists: 1,
-                        ..Default::default()
-                    },
-                );
+            GameEvent::KillAssist(assist) if self.active => {
+                if let Some(target_class) = self.get_class(&assist.target) {
+                    subject_data.assists[target_class] += 1;
+                }
             }
             GameEvent::Damage(DamageEvent {
                 damage: Some(damage),
                 target,
                 ..
             }) if self.active => {
-                self.handle_stats(
-                    subject,
-                    target,
-                    ClassStat {
-                        damage: damage.get() as u16,
-                        ..Default::default()
-                    },
-                );
+                if let Some(target_class) = self.get_class(target) {
+                    subject_data.damage[target_class] += damage.get() as u16;
+                }
             }
             _ => {}
         }
@@ -153,10 +100,11 @@ impl EventHandler for ClassStatsHandler {
     }
 
     fn finish_per_subject(
-        &self,
-        _subject: &SubjectData,
-        data: Self::PerSubjectData,
+        &mut self,
+        subject: &SubjectData,
+        mut data: Self::PerSubjectData,
     ) -> Self::PerSubjectOutput {
+        data.deaths = self.deaths.remove(&subject.id()).unwrap_or_default();
         data
     }
 }

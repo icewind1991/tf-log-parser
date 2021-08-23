@@ -1,8 +1,8 @@
 use crate::common::{SubjectData, SubjectId};
 use crate::event::GameEvent;
-use crate::module::EventHandler;
+use crate::module::GlobalData;
 use crate::raw_event::RawEventType;
-use crate::SubjectMap;
+use crate::{EventMeta, SubjectMap};
 use serde::Serialize;
 use steamid_ng::SteamID;
 
@@ -13,7 +13,7 @@ struct BareChatMessage {
     pub chat_type: ChatType,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, PartialEq)]
 pub struct ChatMessage {
     pub time: u32,
     pub name: String,
@@ -40,31 +40,24 @@ impl ChatMessage {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, PartialEq)]
 pub enum ChatType {
     All,
     Team,
 }
 
 #[derive(Default)]
-pub struct ChatHandler(Vec<BareChatMessage>);
+pub struct ChatMessages(Vec<BareChatMessage>);
 
-impl EventHandler for ChatHandler {
-    type GlobalOutput = Vec<ChatMessage>;
-    type PerSubjectData = ();
-    type PerSubjectOutput = ();
+impl GlobalData for ChatMessages {
+    type Output = Vec<ChatMessage>;
 
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(ty, RawEventType::SayTeam | RawEventType::Say)
     }
 
-    fn handle(
-        &mut self,
-        time: u32,
-        subject: SubjectId,
-        _subject_data: &mut Self::PerSubjectData,
-        event: &GameEvent,
-    ) {
+    fn handle_event(&mut self, meta: &EventMeta, subject: SubjectId, event: &GameEvent) {
+        let time = meta.time;
         if !matches!(subject, SubjectId::Player(_)) {
             return;
         }
@@ -85,18 +78,10 @@ impl EventHandler for ChatHandler {
         }
     }
 
-    fn finish_global(self, subjects: &SubjectMap) -> Self::GlobalOutput {
+    fn finish(self, subjects: &SubjectMap) -> Self::Output {
         self.0
             .into_iter()
             .map(|bare| ChatMessage::from_bare(bare, subjects))
             .collect()
-    }
-
-    fn finish_per_subject(
-        &self,
-        _subject: &SubjectData,
-        data: Self::PerSubjectData,
-    ) -> Self::PerSubjectOutput {
-        data
     }
 }

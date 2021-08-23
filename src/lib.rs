@@ -1,10 +1,10 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
-use crate::module::{ChatHandler, ClassStatsHandler, HealSpreadHandler, MedicStatsHandler};
-use crate::subjectmap::SubjectMap;
+use crate::module::{ChatMessages, ClassStatsHandler, HealSpread, PlayerHandler};
+pub use crate::subjectmap::SubjectMap;
 use chrono::{DateTime, Utc};
-pub use event::GameEvent;
+pub use event::{EventMeta, GameEvent};
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
@@ -72,7 +72,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
 
     for event_res in events {
         let raw_event = event_res?;
-        let should_handle = handler.does_handle(raw_event.ty);
+        let should_handle = Handler::does_handle(raw_event.ty);
         if should_handle || start_time.is_none() {
             let event_time: DateTime<Utc> = (&raw_event.date).try_into().unwrap();
             let match_time = match start_time {
@@ -85,7 +85,11 @@ pub fn parse_with_handler<Handler: EventHandler>(
             if should_handle {
                 let event = GameEvent::parse(&raw_event)?;
                 let (subject, data) = subjects.insert(&raw_event.subject)?;
-                handler.handle(match_time, subject, data, &event);
+                let meta = EventMeta {
+                    time: match_time,
+                    subject,
+                };
+                handler.handle(&meta, subject, data, &event);
             }
         }
     }
@@ -107,8 +111,8 @@ pub fn parse_with_handler<Handler: EventHandler>(
 }
 
 handler!(LogHandler {
-    chat: ChatHandler,
-    heal_spread: HealSpreadHandler,
-    medic_stats: MedicStatsHandler,
+    chat: ChatMessages,
+    heal_spread: PlayerHandler::<HealSpread>,
+    // medic_stats: MedicStatsHandler,
     class_stats: ClassStatsHandler,
 });

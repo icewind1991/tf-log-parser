@@ -1,8 +1,8 @@
 use crate::common::SubjectId;
 use crate::event::GameEvent;
-use crate::module::EventHandler;
+use crate::module::GlobalData;
 use crate::raw_event::RawEventType;
-use crate::{SubjectData, SubjectMap};
+use crate::{EventMeta, SubjectMap};
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::{Serialize, Serializer};
 use std::num::ParseIntError;
@@ -10,7 +10,7 @@ use std::str::{FromStr, ParseBoolError};
 use steamid_ng::SteamID;
 use thiserror::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq)]
 pub enum GameType {
     Sixes,
     Highlander,
@@ -28,7 +28,7 @@ impl FromStr for GameType {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq)]
 pub enum Location {
     Europe,
     NorthAmerica,
@@ -46,7 +46,7 @@ impl FromStr for Location {
     }
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, PartialEq)]
 pub struct LobbyLeader {
     name: String,
     steam_id: SteamID,
@@ -71,7 +71,7 @@ impl FromStr for LobbyLeader {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq)]
 pub struct Settings {
     id: u32,
     leader: LobbyLeader,
@@ -108,7 +108,7 @@ impl Default for Settings {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum LobbySettingsError {
     #[error("Malformed lobby id: {0}")]
     InvalidLobbyId(String),
@@ -196,22 +196,14 @@ impl LobbySettingsHandler {
     }
 }
 
-impl EventHandler for LobbySettingsHandler {
-    type GlobalOutput = Result<Option<Settings>, LobbySettingsError>;
-    type PerSubjectData = ();
-    type PerSubjectOutput = ();
+impl GlobalData for LobbySettingsHandler {
+    type Output = Option<Result<Settings, LobbySettingsError>>;
 
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Say)
     }
 
-    fn handle(
-        &mut self,
-        _time: u32,
-        subject: SubjectId,
-        _subject_data: &mut Self::PerSubjectData,
-        event: &GameEvent,
-    ) {
+    fn handle_event(&mut self, _meta: &EventMeta, subject: SubjectId, event: &GameEvent) {
         if !matches!(subject, SubjectId::Console) {
             return;
         }
@@ -222,20 +214,12 @@ impl EventHandler for LobbySettingsHandler {
         }
     }
 
-    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
+    fn finish(self, _subjects: &SubjectMap) -> Self::Output {
         match self {
-            LobbySettingsHandler::NotAvailable => Ok(None),
-            LobbySettingsHandler::Active(settings) => Ok(Some(settings)),
-            LobbySettingsHandler::Err(e) => Err(e),
+            LobbySettingsHandler::NotAvailable => None,
+            LobbySettingsHandler::Active(settings) => Some(Ok(settings)),
+            LobbySettingsHandler::Err(e) => Some(Err(e)),
         }
-    }
-
-    fn finish_per_subject(
-        &self,
-        _subject: &SubjectData,
-        data: Self::PerSubjectData,
-    ) -> Self::PerSubjectOutput {
-        data
     }
 }
 

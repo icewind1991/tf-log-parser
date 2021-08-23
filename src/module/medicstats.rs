@@ -1,10 +1,9 @@
 use crate::common::SubjectId;
 use crate::event::GameEvent;
-use crate::module::EventHandler;
+use crate::module::PlayerSpecificData;
 use crate::raw_event::RawEventType;
-use crate::{SubjectData, SubjectMap};
+use crate::EventMeta;
 use serde::Serialize;
-use thiserror::Error;
 
 #[derive(Default)]
 pub struct MedicStatsBuilder {
@@ -24,7 +23,7 @@ pub struct MedicStatsBuilder {
     drops: u32,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default, PartialEq)]
 pub struct MedicStats {
     advantages_lost: u32,
     biggest_advantage_lost: f32,
@@ -40,6 +39,9 @@ pub struct MedicStats {
 
 impl From<MedicStatsBuilder> for MedicStats {
     fn from(builder: MedicStatsBuilder) -> Self {
+        if builder.start_healing_count == 0 {
+            return Self::default();
+        }
         MedicStats {
             advantages_lost: builder.advantages_lost,
             biggest_advantage_lost: builder.biggest_advantage_lost,
@@ -56,19 +58,10 @@ impl From<MedicStatsBuilder> for MedicStats {
     }
 }
 
-#[derive(Error, Debug)]
-#[error("Invalid charge event: {0}")]
-pub struct InvalidMedicEvent(String);
+impl PlayerSpecificData for MedicStatsBuilder {
+    type Output = MedicStats;
 
-#[derive(Default)]
-pub struct MedicStatsHandler;
-
-impl EventHandler for MedicStatsHandler {
-    type GlobalOutput = ();
-    type PerSubjectData = MedicStatsBuilder;
-    type PerSubjectOutput = MedicStats;
-
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(
             ty,
             RawEventType::ChargeDeployed
@@ -80,65 +73,51 @@ impl EventHandler for MedicStatsHandler {
         )
     }
 
-    fn handle(
-        &mut self,
-        time: u32,
-        _subject: SubjectId,
-        subject_data: &mut Self::PerSubjectData,
-        event: &GameEvent,
-    ) {
+    fn handle_event(&mut self, meta: &EventMeta, _subject: SubjectId, event: &GameEvent) {
         match event {
             GameEvent::ChargeEnded(end) => {
-                subject_data.total_uber_length += end.duration.unwrap_or_default();
-                subject_data.last_uber_end = time;
+                self.total_uber_length += end.duration.unwrap_or_default();
+                self.last_uber_end = meta.time;
             }
             GameEvent::ChargeDeployed(_deployed) => {
-                subject_data.charge_count += 1;
+                self.charge_count += 1;
             }
             GameEvent::AdvantageLost(lost) => {
-                subject_data.advantages_lost += 1;
+                self.advantages_lost += 1;
                 let time = lost.time.unwrap_or_default();
-                if time > subject_data.biggest_advantage_lost {
-                    subject_data.biggest_advantage_lost = time;
+                if time > self.biggest_advantage_lost {
+                    self.biggest_advantage_lost = time;
                 }
             }
             GameEvent::FirstHeal(first) => {
-                subject_data.total_time_before_healing += first.time.unwrap_or_default();
-                subject_data.start_healing_count += 1;
-                subject_data.last_build_start = time;
+                self.total_time_before_healing += first.time.unwrap_or_default();
+                self.start_healing_count += 1;
+                self.last_build_start = meta.time;
             }
             GameEvent::ChargeReady => {
-                if subject_data.last_build_start > 0 {
-                    let build_time = time - subject_data.last_build_start;
-                    subject_data.last_build_start = 0;
-                    subject_data.total_time_to_build += build_time;
-                    subject_data.uber_build_count += 1;
+                if self.last_build_start > 0 {
+                    let build_time = meta.time - self.last_build_start;
+                    self.last_build_start = 0;
+                    self.total_time_to_build += build_time;
+                    self.uber_build_count += 1;
                 }
             }
             GameEvent::MedicDeath(death) => {
                 let charge = death.charge.unwrap_or_default();
                 if charge >= 95 && charge < 100 {
-                    subject_data.near_full_charge_death += 1;
+                    self.near_full_charge_death += 1;
                 } else if charge >= 100 {
-                    subject_data.drops += 1;
+                    self.drops += 1;
                 }
-                if time - subject_data.last_uber_end <= 10 {
-                    subject_data.deaths_after_uber += 1;
+                if meta.time - self.last_uber_end <= 10 {
+                    self.deaths_after_uber += 1;
                 }
             }
             _ => {}
         }
     }
 
-    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
-        ()
-    }
-
-    fn finish_per_subject(
-        &self,
-        _subject: &SubjectData,
-        data: Self::PerSubjectData,
-    ) -> Self::PerSubjectOutput {
-        data.into()
+    fn finish(self) -> Self::Output {
+        self.into()
     }
 }

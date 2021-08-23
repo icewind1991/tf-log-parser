@@ -37,6 +37,10 @@ impl<T: Default> SubjectMap<T> {
 }
 
 impl<T> SubjectMap<T> {
+    pub fn subject(&self, id: SubjectId) -> &SubjectData {
+        &self[id].0
+    }
+
     pub fn to_just_subjects(&self) -> SubjectMap<()> {
         SubjectMap(
             self.0

@@ -1,49 +1,34 @@
 use crate::common::{SteamId3, SubjectId};
 use crate::event::GameEvent;
-use crate::module::EventHandler;
+use crate::module::PlayerSpecificData;
 use crate::raw_event::RawEventType;
-use crate::{SubjectData, SubjectMap};
+use crate::EventMeta;
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 
-#[derive(Default)]
-pub struct HealSpreadHandler;
+#[derive(Default, Serialize, PartialEq)]
+pub struct HealSpread(BTreeMap<SteamId3, u32>);
 
-impl EventHandler for HealSpreadHandler {
-    type GlobalOutput = ();
-    type PerSubjectData = BTreeMap<SteamId3, u32>;
-    type PerSubjectOutput = BTreeMap<SteamId3, u32>;
+impl PlayerSpecificData for HealSpread {
+    type Output = HealSpread;
 
-    fn does_handle(&self, ty: RawEventType) -> bool {
+    fn does_handle(ty: RawEventType) -> bool {
         matches!(ty, RawEventType::Healed)
     }
 
-    fn handle(
-        &mut self,
-        _time: u32,
-        _subject: SubjectId,
-        subject_data: &mut Self::PerSubjectData,
-        event: &GameEvent,
-    ) {
+    fn handle_event(&mut self, _meta: &EventMeta, _subject: SubjectId, event: &GameEvent) {
         if let GameEvent::Healed(heal_event) = event {
             if let Ok(target_subject) = SubjectId::try_from(&heal_event.target) {
                 if let Some(target_steam_id) = target_subject.steam_id() {
-                    let healed = subject_data.entry(SteamId3(target_steam_id)).or_default();
+                    let healed = self.0.entry(SteamId3(target_steam_id)).or_default();
                     *healed += heal_event.amount
                 }
             }
         }
     }
 
-    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
-        ()
-    }
-
-    fn finish_per_subject(
-        &self,
-        _subject: &SubjectData,
-        data: Self::PerSubjectData,
-    ) -> Self::PerSubjectOutput {
-        data
+    fn finish(self) -> Self::Output {
+        self
     }
 }

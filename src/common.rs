@@ -4,7 +4,7 @@ use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
 use std::convert::TryFrom;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 use steamid_ng::{AccountType, Instance, SteamID, Universe};
@@ -27,7 +27,7 @@ impl Team {
 
 impl Display for Team {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.as_str().fmt(f)
+        <str as Debug>::fmt(self.as_str(), f)
     }
 }
 
@@ -153,6 +153,18 @@ impl<T: Default> Default for ClassMap<T> {
     }
 }
 
+impl<T: Debug> Debug for ClassMap<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <[T; 9] as Debug>::fmt(&self.0, f)
+    }
+}
+
+impl<T: PartialEq> PartialEq for ClassMap<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
 /// Optimized subject id
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd, Hash)]
 pub enum SubjectId {
@@ -220,6 +232,18 @@ pub enum SubjectData {
     System(String),
     Console,
     World,
+}
+
+impl SubjectData {
+    pub fn id(&self) -> SubjectId {
+        match self {
+            SubjectData::Player { steam_id, .. } => SubjectId::Player(steam_id.account_id()),
+            SubjectData::Team(team) => SubjectId::Team(*team),
+            SubjectData::System(_) => SubjectId::System,
+            SubjectData::Console => SubjectId::Console,
+            SubjectData::World => SubjectId::World,
+        }
+    }
 }
 
 #[derive(Debug, Error)]

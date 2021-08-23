@@ -3,7 +3,7 @@ mod medic;
 mod player;
 
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
-use crate::{RawEvent, RawEventType};
+use crate::{RawEvent, RawEventType, SubjectId};
 pub use game::*;
 pub use medic::*;
 use nom::bytes::complete::{tag, take_while};
@@ -44,6 +44,12 @@ impl<'a, T> GameEventErrTrait<T> for IResult<&str, T> {
         })
         .map(|(_rest, t)| t)
     }
+}
+
+#[derive(Debug)]
+pub struct EventMeta {
+    pub time: u32,
+    pub subject: SubjectId,
 }
 
 #[derive(Debug)]

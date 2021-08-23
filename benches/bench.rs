@@ -5,7 +5,7 @@ use tf_log_parser::{parse, RawEvent};
 
 pub fn parse_benchmark(c: &mut Criterion) {
     let input = read_to_string("test_data/log_2892242.log").unwrap();
-    c.bench_function("parse 2892242", |b| b.iter(|| parse(black_box(&input))));
+    c.bench_function("parse log 2892242", |b| b.iter(|| parse(black_box(&input))));
 }
 
 pub fn parse_raw(c: &mut Criterion) {
