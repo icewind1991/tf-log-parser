@@ -9,9 +9,10 @@ pub use medic::*;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::{alpha1, digit1};
 use nom::combinator::opt;
-use nom::error::ErrorKind;
+use nom::error::{ErrorKind, ParseError};
 use nom::{Err, IResult};
 pub use player::*;
+use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -68,12 +69,34 @@ pub enum GameEvent<'a> {
     FirstHeal(FirstHealEvent),
     ChargeReady,
     MedicDeath(MedicDeathEvent),
+    MedicDeathEx(MedicDeathExEvent),
     Spawned(SpawnEvent),
     RoleChange(RoleChangeEvent),
     RoundStart,
     RoundWin(RoundWinEvent<'a>),
     RoundLength(RoundLengthEvent),
     RoundOverTime,
+    LogFileStarted(LogFileStartedEvent<'a>),
+    Connected(ConnectedEvent),
+    Disconnect(DisconnectEvent<'a>),
+    SteamIdValidated,
+    Entered,
+    Joined(JoinedTeamEvent),
+    Suicide(CommittedSuicideEvent<'a>),
+    PickedUp(PickedUpEvent<'a>),
+    Domination(DominationEvent<'a>),
+    EmptyUber,
+    Revenge(RevengeEvent<'a>),
+    TournamentModeStarted(TournamentModeStartedEvent<'a>),
+    CaptureBlocked(CaptureBlockedEvent<'a>),
+    PointCaptured(PointCapturedEvent<'a>),
+    CurrentScore(CurrentScoreEvent),
+    BuiltObject(BuiltObjectEvent<'a>),
+    KilledObject(KilledObjectEvent<'a>),
+    Extinguished(ExtinguishedEvent<'a>),
+    GameOver(GameOverEvent<'a>),
+    FinalScore(FinalScoreEvent),
+    LogFileClosed,
 }
 
 impl<'a> GameEvent<'a> {
@@ -115,6 +138,9 @@ impl<'a> GameEvent<'a> {
             RawEventType::MedicDeath => {
                 GameEvent::MedicDeath(medic_death_event_parser(raw.params).with_type(raw.ty)?)
             }
+            RawEventType::MedicDeathEx => {
+                GameEvent::MedicDeathEx(medic_death_ex_event_parser(raw.params).with_type(raw.ty)?)
+            }
             RawEventType::Spawned => {
                 GameEvent::Spawned(spawn_event_parser(raw.params).with_type(raw.ty)?)
             }
@@ -129,6 +155,61 @@ impl<'a> GameEvent<'a> {
                 GameEvent::RoundWin(round_win_event_parser(raw.params).with_type(raw.ty)?)
             }
             RawEventType::RoundOvertime => GameEvent::RoundOverTime,
+            RawEventType::LogFileStarted => GameEvent::LogFileStarted(
+                log_file_started_event_parser(raw.params).with_type(raw.ty)?,
+            ),
+            RawEventType::Connected => {
+                GameEvent::Connected(connected_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::Disconnected => {
+                GameEvent::Disconnect(disconnected_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::SteamIdValidated => GameEvent::SteamIdValidated,
+            RawEventType::Entered => GameEvent::Entered,
+            RawEventType::Joined => {
+                GameEvent::Joined(joined_team_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::Suicide => {
+                GameEvent::Suicide(committed_suicide_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::PickedUp => {
+                GameEvent::PickedUp(picked_up_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::Domination => {
+                GameEvent::Domination(domination_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::EmptyUber => GameEvent::EmptyUber,
+            RawEventType::Revenge => {
+                GameEvent::Revenge(revenge_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::TournamentStart => GameEvent::TournamentModeStarted(
+                tournament_mode_started_event_parser(raw.params).with_type(raw.ty)?,
+            ),
+            RawEventType::CaptureBlocked => GameEvent::CaptureBlocked(
+                capture_blocked_event_parser(raw.params).with_type(raw.ty)?,
+            ),
+            RawEventType::PointCaptured => {
+                GameEvent::PointCaptured(point_captures_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::CurrentScore => {
+                GameEvent::CurrentScore(current_score_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::PlayerBuiltObject => {
+                GameEvent::BuiltObject(built_object_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::PlayerKilledObject => {
+                GameEvent::KilledObject(killed_object_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::PlayerExtinguished => {
+                GameEvent::Extinguished(extinguished_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::GameOver => {
+                GameEvent::GameOver(game_over_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::FinalScore => {
+                GameEvent::FinalScore(final_score_event_parser(raw.params).with_type(raw.ty)?)
+            }
+            RawEventType::LogFileClosed => GameEvent::LogFileClosed,
             _ => {
                 todo!("{:?} not parsed yet", raw.ty);
             }
@@ -203,6 +284,12 @@ fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<&'a str, T>>(
         }
         Ok((input.trim_start(), value))
     }
+}
+
+fn parse_from_str<T: FromStr>(input: &str) -> IResult<&str, T> {
+    T::from_str(input)
+        .map(|res| ("", res))
+        .map_err(|_| nom::Err::Error(nom::error::Error::from_error_kind(input, ErrorKind::IsNot)))
 }
 
 fn int(input: &str) -> IResult<&str, i32> {

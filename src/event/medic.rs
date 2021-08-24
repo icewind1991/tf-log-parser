@@ -76,3 +76,18 @@ pub fn medic_death_event_parser(input: &str) -> IResult<&str, MedicDeathEvent> {
     }
     Ok((input, MedicDeathEvent { charge }))
 }
+
+#[derive(Debug)]
+pub struct MedicDeathExEvent {
+    pub charge_percentage: Option<u8>,
+}
+
+pub fn medic_death_ex_event_parser(input: &str) -> IResult<&str, MedicDeathExEvent> {
+    let (input, charge_percentage) = opt(param_parse_with("time", quoted(u_int)))(input)?;
+    Ok((
+        input,
+        MedicDeathExEvent {
+            charge_percentage: charge_percentage.map(|charge: u32| charge as u8),
+        },
+    ))
+}

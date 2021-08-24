@@ -27,7 +27,6 @@ impl<'a> RawEvent<'a> {
 }
 
 fn event_parser(input: &str) -> IResult<&str, RawEvent> {
-    let (input, _) = tag("L ")(input)?;
     let (input, date) = date_parser(input)?;
 
     let (input, _) = tag(": ")(input)?;
@@ -190,7 +189,7 @@ pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
 
 #[derive(IntoEnumIterator, Copy, Clone, Debug, PartialEq)]
 pub enum RawEventType {
-    JoinedTeam,
+    Joined,
     ChangedRole,
     ShotFired,
     ShotHit,
@@ -212,7 +211,7 @@ pub enum RawEventType {
     PlayerKilledObject,
     PlayerExtinguished,
     ObjectDetonated,
-    PickedUpItem,
+    PickedUp,
     MedicDeath,
     MedicDeathEx,
     ChargeEnd,
@@ -253,7 +252,7 @@ pub enum RawEventType {
 impl RawEventType {
     pub fn tag(self) -> &'static str {
         match self {
-            RawEventType::JoinedTeam => r#"joined team"#,
+            RawEventType::Joined => r#"joined"#,
             RawEventType::ChangedRole => r#"changed role"#,
             RawEventType::ShotFired => r#"triggered "shot_fired""#,
             RawEventType::ShotHit => r#"triggered "shot_hit""#,
@@ -275,7 +274,7 @@ impl RawEventType {
             RawEventType::PlayerKilledObject => r#"triggered "killedobject""#,
             RawEventType::ObjectDetonated => r#"triggered "object_detonated""#,
             RawEventType::PlayerExtinguished => r#"triggered "player_extinguished""#,
-            RawEventType::PickedUpItem => r#"picked up item"#,
+            RawEventType::PickedUp => r#"picked up"#,
             RawEventType::MedicDeath => r#"triggered "medic_death""#,
             RawEventType::MedicDeathEx => r#"triggered "medic_death_ex""#,
             RawEventType::ChargeEnd => r#"triggered "chargeended""#,
@@ -295,8 +294,8 @@ impl RawEventType {
             RawEventType::PointCaptured => r#"triggered "pointcaptured""#,
             RawEventType::CaptureBlocked => r#"triggered "captureblocked""#,
             RawEventType::GameOver => r#"triggered "Game_Over""#,
-            RawEventType::CurrentScore => r#"current score"#,
-            RawEventType::FinalScore => r#"final score"#,
+            RawEventType::CurrentScore => r#"current"#,
+            RawEventType::FinalScore => r#"final"#,
             RawEventType::WinLimit => r#"triggered "Intermission_Win_Limit""#,
             RawEventType::Paused => r#"triggered "Game_Paused""#,
             RawEventType::UnPaused => r#"triggered "Game_Unpaused""#,

@@ -61,8 +61,8 @@ pub fn parse_with_handler<Handler: EventHandler>(
     Error,
 > {
     let events = log
-        .lines()
-        .filter(|line| line.starts_with("L "))
+        .split("L ")
+        .filter(|line| !line.is_empty())
         .map(RawEvent::parse);
 
     let mut handler = Handler::default();

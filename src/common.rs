@@ -14,6 +14,7 @@ use thiserror::Error;
 pub enum Team {
     Red,
     Blue,
+    Spectator,
 }
 
 impl Team {
@@ -21,6 +22,7 @@ impl Team {
         match self {
             Team::Red => "Red",
             Team::Blue => "Blue",
+            Team::Spectator => "Spectator",
         }
     }
 }
@@ -38,6 +40,7 @@ impl FromStr for Team {
         match s {
             "Blue" => Ok(Team::Blue),
             "Red" => Ok(Team::Red),
+            "Spectator" => Ok(Team::Spectator),
             _ => Err(()),
         }
     }
