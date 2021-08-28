@@ -1,10 +1,9 @@
 use crate::{SubjectError, SubjectId};
 use chrono::{DateTime, TimeZone, Utc};
-use enum_iterator::IntoEnumIterator;
+use logos::{Lexer, Logos};
 use nom::branch::alt;
 use nom::bytes::complete::{tag, tag_no_case, take_while};
 use nom::character::complete::{digit1, one_of};
-use nom::error::{make_error, ErrorKind};
 use nom::{Finish, IResult};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
@@ -187,146 +186,138 @@ pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
     ))(input)
 }
 
-#[derive(IntoEnumIterator, Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Logos)]
 pub enum RawEventType {
+    #[token(r#"joined"#)]
     Joined,
+    #[token(r#"changed role"#)]
     ChangedRole,
+    #[token(r#"triggered "shot_fired""#)]
     ShotFired,
+    #[token(r#"triggered "shot_hit""#)]
     ShotHit,
+    #[token(r#"triggered "damage""#)]
     Damage,
+    #[token(r#"triggered "healed""#)]
     Healed,
+    #[token(r#"triggered "first_heal_after_spawn""#)]
     FirstHealAfterSpawn,
+    #[token(r#"killed"#)]
     Killed,
+    #[token(r#"triggered "kill assist""#)]
     KillAssist,
+    #[token(r#"committed suicide"#)]
     Suicide,
+    #[token(r#"triggered "domination""#)]
     Domination,
+    #[token(r#"triggered "revenge""#)]
     Revenge,
+    #[token(r#"spawned"#)]
     Spawned,
+    #[token(r#"say_team"#)]
     SayTeam,
+    #[token(r#"say"#)]
     Say,
+    #[token(r#"triggered "empty_uber""#)]
     EmptyUber,
+    #[token(r#"triggered "player_builtobject""#)]
     PlayerBuiltObject,
+    #[token(r#"triggered "player_dropobject""#)]
     PlayerCarryObject,
+    #[token(r#"triggered "player_carryobject""#)]
     PlayerDropObject,
+    #[token(r#"triggered "killedobject""#)]
     PlayerKilledObject,
+    #[token(r#"triggered "object_detonated""#)]
     PlayerExtinguished,
+    #[token(r#"triggered "player_extinguished""#)]
     ObjectDetonated,
+    #[token(r#"picked up"#)]
     PickedUp,
+    #[token(r#"triggered "medic_death""#)]
     MedicDeath,
+    #[token(r#"triggered "medic_death_ex""#)]
     MedicDeathEx,
+    #[token(r#"triggered "chargeended""#)]
     ChargeEnd,
+    #[token(r#"triggered "chargeready""#)]
     ChargeReady,
+    #[token(r#"triggered "chargedeployed""#)]
     ChargeDeployed,
+    #[token(r#"triggered "lost_uber_advantage""#)]
     UberAdvantageLost,
+    #[token(r#"triggered "Round_Start""#)]
     RoundStart,
+    #[token(r#"triggered "Round_Setup_Begin""#)]
     RoundSetupBegin,
+    #[token(r#"triggered "Round_Setup_End""#)]
     RoundSetupEnd,
+    #[token(r#"triggered "Mini_Round_Selected""#)]
     MiniRoundSelected,
+    #[token(r#"triggered "Mini_Round_Start""#)]
     MiniRoundStart,
+    #[token(r#"triggered "Round_Win""#)]
     RoundWin,
+    #[token(r#"triggered "Mini_Round_Win""#)]
     MiniRoundWin,
+    #[token(r#"triggered "Round_Length""#)]
     RoundLength,
+    #[token(r#"triggered "Mini_Round_Length""#)]
     MiniRoundLength,
+    #[token(r#"triggered "Round_Overtime""#)]
     RoundOvertime,
+    #[token(r#"triggered "pointcaptured""#)]
     PointCaptured,
+    #[token(r#"triggered "captureblocked""#)]
     CaptureBlocked,
+    #[token(r#"triggered "Game_Over""#)]
     GameOver,
+    #[token(r#"current"#)]
     CurrentScore,
+    #[token(r#"final"#)]
     FinalScore,
+    #[token(r#"triggered "Intermission_Win_Limit""#)]
     WinLimit,
+    #[token(r#"triggered "Game_Paused""#)]
     Paused,
+    #[token(r#"triggered "Game_Unpaused""#)]
     UnPaused,
+    #[token(r#"Request: "#)]
     Request,
+    #[token(r#"Response: "#)]
     Response,
+    #[token(r#"connected,"#)]
     Connected,
+    #[token(r#"disconnected"#)]
     Disconnected,
+    #[token(r#"STEAM USERID validated"#)]
     SteamIdValidated,
+    #[token(r#"entered the game"#)]
     Entered,
+    #[token(r#"file started"#)]
     LogFileStarted,
+    #[token(r#"file closed"#)]
     LogFileClosed,
+    #[token(r#"The log might have not been uploaded."#)]
     NotUploaded,
+    #[token(r#"mode started"#)]
     TournamentStart,
+    #[token(r#"triggered "flagevent""#)]
     FlagEvent,
-}
-
-impl RawEventType {
-    pub fn tag(self) -> &'static str {
-        match self {
-            RawEventType::Joined => r#"joined"#,
-            RawEventType::ChangedRole => r#"changed role"#,
-            RawEventType::ShotFired => r#"triggered "shot_fired""#,
-            RawEventType::ShotHit => r#"triggered "shot_hit""#,
-            RawEventType::Damage => r#"triggered "damage""#,
-            RawEventType::Healed => r#"triggered "healed""#,
-            RawEventType::FirstHealAfterSpawn => r#"triggered "first_heal_after_spawn""#,
-            RawEventType::Killed => r#"killed"#,
-            RawEventType::KillAssist => r#"triggered "kill assist""#,
-            RawEventType::Suicide => r#"committed suicide"#,
-            RawEventType::Domination => r#"triggered "domination""#,
-            RawEventType::Revenge => r#"triggered "revenge""#,
-            RawEventType::Spawned => r#"spawned"#,
-            RawEventType::SayTeam => r#"say_team"#,
-            RawEventType::Say => r#"say"#,
-            RawEventType::EmptyUber => r#"triggered "empty_uber""#,
-            RawEventType::PlayerBuiltObject => r#"triggered "player_builtobject""#,
-            RawEventType::PlayerDropObject => r#"triggered "player_dropobject""#,
-            RawEventType::PlayerCarryObject => r#"triggered "player_carryobject""#,
-            RawEventType::PlayerKilledObject => r#"triggered "killedobject""#,
-            RawEventType::ObjectDetonated => r#"triggered "object_detonated""#,
-            RawEventType::PlayerExtinguished => r#"triggered "player_extinguished""#,
-            RawEventType::PickedUp => r#"picked up"#,
-            RawEventType::MedicDeath => r#"triggered "medic_death""#,
-            RawEventType::MedicDeathEx => r#"triggered "medic_death_ex""#,
-            RawEventType::ChargeEnd => r#"triggered "chargeended""#,
-            RawEventType::ChargeReady => r#"triggered "chargeready""#,
-            RawEventType::ChargeDeployed => r#"triggered "chargedeployed""#,
-            RawEventType::UberAdvantageLost => r#"triggered "lost_uber_advantage""#,
-            RawEventType::RoundStart => r#"triggered "Round_Start""#,
-            RawEventType::RoundSetupBegin => r#"triggered "Round_Setup_Begin""#,
-            RawEventType::RoundSetupEnd => r#"triggered "Round_Setup_End""#,
-            RawEventType::MiniRoundSelected => r#"triggered "Mini_Round_Selected""#,
-            RawEventType::MiniRoundStart => r#"triggered "Mini_Round_Start""#,
-            RawEventType::RoundWin => r#"triggered "Round_Win""#,
-            RawEventType::MiniRoundWin => r#"triggered "Mini_Round_Win""#,
-            RawEventType::RoundLength => r#"triggered "Round_Length""#,
-            RawEventType::MiniRoundLength => r#"triggered "Mini_Round_Length""#,
-            RawEventType::RoundOvertime => r#"triggered "Round_Overtime""#,
-            RawEventType::PointCaptured => r#"triggered "pointcaptured""#,
-            RawEventType::CaptureBlocked => r#"triggered "captureblocked""#,
-            RawEventType::GameOver => r#"triggered "Game_Over""#,
-            RawEventType::CurrentScore => r#"current"#,
-            RawEventType::FinalScore => r#"final"#,
-            RawEventType::WinLimit => r#"triggered "Intermission_Win_Limit""#,
-            RawEventType::Paused => r#"triggered "Game_Paused""#,
-            RawEventType::UnPaused => r#"triggered "Game_Unpaused""#,
-            RawEventType::Request => r#"Request: "#,
-            RawEventType::Response => r#"Response: "#,
-            RawEventType::Connected => r#"connected,"#,
-            RawEventType::Disconnected => r#"disconnected"#,
-            RawEventType::SteamIdValidated => r#"STEAM USERID validated"#,
-            RawEventType::Entered => r#"entered the game"#,
-            RawEventType::LogFileStarted => r#"file started"#,
-            RawEventType::LogFileClosed => r#"file closed"#,
-            RawEventType::NotUploaded => r#"The log might have not been uploaded."#,
-            RawEventType::TournamentStart => r#"mode started"#,
-            RawEventType::FlagEvent => r#"triggered "flagevent""#,
-        }
-    }
+    #[error]
+    Unknown,
 }
 
 fn event_type_parser(input: &str) -> IResult<&str, RawEventType> {
-    for event_type in RawEventType::into_enum_iter() {
-        if let Ok((input, _ty)) = tag::<_, _, nom::error::Error<&str>>(event_type.tag())(input) {
-            return Ok((input, event_type));
-        }
-    }
-    Err(nom::Err::Error(make_error(input, ErrorKind::NoneOf)))
+    let mut lexer = Lexer::new(input);
+    let ty = lexer.next().unwrap_or(RawEventType::Unknown);
+    Ok((lexer.remainder(), ty))
 }
 
 #[test]
 fn test_parse_raw() {
     let input =
-        r#"L 08/06/2018 - 21:13:57: "makxbi<27><[U:1:40364391]><Red>" changed role to "sniper""#;
+        r#"08/06/2018 - 21:13:57: "makxbi<27><[U:1:40364391]><Red>" changed role to "sniper""#;
     let raw = RawEvent::parse(input).unwrap();
     assert_eq!(
         RawEvent {
@@ -365,7 +356,7 @@ fn test_parse_all_valid() {
             .unwrap()
             .read_to_string(&mut buff)
             .unwrap();
-        for line in buff.trim().lines() {
+        for line in buff.trim().split("L ").filter(|line| !line.is_empty()) {
             if line.starts_with("L ") {
                 RawEvent::parse(line).unwrap();
             }

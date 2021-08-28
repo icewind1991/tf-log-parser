@@ -17,6 +17,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 main_error = "0.1"
 paste = "1"
+logos = { version = "0.12", path = "../../logos/logos" }
 
 [dev-dependencies]
 criterion = "0.3"
