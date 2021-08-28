@@ -1,8 +1,8 @@
 use crate::{SubjectError, SubjectId};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
 use nom::branch::alt;
-use nom::bytes::complete::{tag, tag_no_case, take_while};
+use nom::bytes::complete::{tag, tag_no_case, take, take_while};
 use nom::character::complete::{digit1, one_of};
 use nom::{Finish, IResult};
 use std::convert::{TryFrom, TryInto};
@@ -17,6 +17,13 @@ pub struct RawEvent<'a> {
     pub ty: RawEventType,
     pub params: &'a str,
 }
+
+// pub enum RawEventToken {
+//     #[error]
+//     Error,
+//     #[regex(r"\d{2}/\d{2}/\d{4} - \d{2}:\d{2}:\d{2}"), |raw| NaiveDateTime::parse_from_str(raw, "%m/$d/%Y - %H:%M%S")]
+//     Date(NaiveDateTime),
+// }
 
 impl<'a> RawEvent<'a> {
     pub fn parse(line: &'a str) -> Result<Self, nom::error::Error<&'a str>> {
@@ -45,59 +52,36 @@ fn event_parser(input: &str) -> IResult<&str, RawEvent> {
     ))
 }
 
-#[derive(Debug, PartialEq)]
-pub struct RawDate<'a> {
-    pub month: &'a str,
-    pub day: &'a str,
-    pub year: &'a str,
-    pub hour: &'a str,
-    pub minutes: &'a str,
-    pub seconds: &'a str,
-}
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct RawDate<'a>(&'a str);
 
-impl<'a> TryFrom<&RawDate<'a>> for DateTime<Utc> {
+impl<'a> TryFrom<RawDate<'a>> for NaiveDateTime {
     type Error = ParseIntError;
 
-    fn try_from(value: &RawDate<'a>) -> Result<Self, Self::Error> {
-        Ok(Utc
-            .ymd(
-                value.year.parse()?,
-                value.month.parse()?,
-                value.day.parse()?,
-            )
-            .and_hms(
-                value.hour.parse()?,
-                value.minutes.parse()?,
-                value.seconds.parse()?,
-            ))
+    fn try_from(RawDate(raw): RawDate<'a>) -> Result<Self, Self::Error> {
+        Ok(
+            NaiveDate::from_ymd(raw[6..10].parse()?, raw[0..2].parse()?, raw[3..5].parse()?)
+                .and_hms(
+                    raw[13..15].parse()?,
+                    raw[16..18].parse()?,
+                    raw[19..21].parse()?,
+                ),
+        )
     }
 }
 
 fn date_parser(input: &str) -> IResult<&str, RawDate> {
-    let (input, month) = digit1(input)?;
-    let (input, _) = tag("/")(input)?;
-    let (input, day) = digit1(input)?;
-    let (input, _) = tag("/")(input)?;
-    let (input, year) = digit1(input)?;
+    let (input, raw) = take(21usize)(input)?;
+    Ok((input, RawDate(raw)))
+}
 
-    let (input, _) = tag(" - ")(input)?;
-
-    let (input, hour) = digit1(input)?;
-    let (input, _) = tag(":")(input)?;
-    let (input, minutes) = digit1(input)?;
-    let (input, _) = tag(":")(input)?;
-    let (input, seconds) = digit1(input)?;
-    Ok((
-        input,
-        RawDate {
-            month,
-            day,
-            year,
-            hour,
-            minutes,
-            seconds,
-        },
-    ))
+#[test]
+fn test_parse_date() {
+    let raw = RawDate("08/06/2018 - 21:13:57");
+    assert_eq!(
+        NaiveDate::from_ymd(2018, 08, 06).and_hms(21, 13, 57),
+        raw.try_into().unwrap()
+    );
 }
 
 #[derive(Debug, PartialEq)]
@@ -321,14 +305,7 @@ fn test_parse_raw() {
     let raw = RawEvent::parse(input).unwrap();
     assert_eq!(
         RawEvent {
-            date: RawDate {
-                month: "08",
-                day: "06",
-                year: "2018",
-                hour: "21",
-                minutes: "13",
-                seconds: "57",
-            },
+            date: RawDate("08/06/2018 - 21:13:57"),
             subject: RawSubject::Player("makxbi<27><[U:1:40364391]><Red>"),
             ty: RawEventType::ChangedRole,
             params: r#"to "sniper""#,

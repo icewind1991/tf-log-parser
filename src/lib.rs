@@ -3,7 +3,7 @@ use crate::event::GameEventError;
 pub use crate::module::EventHandler;
 use crate::module::{ChatMessages, ClassStatsHandler, HealSpread, PlayerHandler};
 pub use crate::subjectmap::SubjectMap;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 pub use event::{EventMeta, GameEvent};
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
@@ -67,14 +67,14 @@ pub fn parse_with_handler<Handler: EventHandler>(
 
     let mut handler = Handler::default();
 
-    let mut start_time: Option<DateTime<Utc>> = None;
+    let mut start_time: Option<NaiveDateTime> = None;
     let mut subjects = SubjectMap::<Handler::PerSubjectData>::default();
 
     for event_res in events {
         let raw_event = event_res?;
         let should_handle = Handler::does_handle(raw_event.ty);
         if should_handle || start_time.is_none() {
-            let event_time: DateTime<Utc> = (&raw_event.date).try_into().unwrap();
+            let event_time: NaiveDateTime = raw_event.date.try_into().unwrap();
             let match_time = match start_time {
                 Some(start_time) => (event_time - start_time).num_seconds() as u32,
                 None => {
