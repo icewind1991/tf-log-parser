@@ -1,4 +1,4 @@
-use crate::event::{param_parse, param_parse_with, parse_from_str, position, u_int, ParamIter};
+use crate::event::{param_parse, param_parse_with, position, u_int, ParamIter};
 use crate::raw_event::{subject_parser, RawSubject};
 use nom::bytes::complete::{tag, take_while};
 use nom::combinator::opt;

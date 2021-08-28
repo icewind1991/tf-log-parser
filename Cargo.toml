@@ -20,7 +20,12 @@ paste = "1"
 
 [dev-dependencies]
 criterion = "0.3"
+iai = "0.1"
 
 [[bench]]
 name = "bench"
+harness = false
+
+[[bench]]
+name = "iai"
 harness = false
