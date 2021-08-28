@@ -87,6 +87,16 @@ impl<Head: EventHandler, Tail: EventHandler> EventHandler for HandlerStack<Head,
     }
 }
 
+macro_rules! replace_expr {
+    ($_t:tt $sub:expr) => {
+        $sub
+    };
+}
+
+macro_rules! count_tts {
+    ($($tts:tt)*) => {0usize $(+ replace_expr!($tts 1usize))*};
+}
+
 #[macro_export]
 macro_rules! handler {
     ($name:ident {$($child:ident: $ty:path),*}) => {
@@ -109,7 +119,7 @@ macro_rules! handler {
                     S: serde::Serializer,
                 {
                     use serde::ser::SerializeStruct;
-                    let mut state = serializer.serialize_struct(concat!(stringify!($name), "output"), 0)?;
+                    let mut state = serializer.serialize_struct(concat!(stringify!($name), "output"), count_tts!($($child)*))?;
                     $(
                         if self.$child != <<$ty as $crate::EventHandler>::GlobalOutput>::default() {
                             state.serialize_field(stringify!($child), &self.$child)?;
@@ -141,7 +151,7 @@ macro_rules! handler {
                     S: serde::Serializer,
                 {
                     use serde::ser::SerializeStruct;
-                    let mut state = serializer.serialize_struct(concat!(stringify!($name), "output"), 0)?;
+                    let mut state = serializer.serialize_struct(concat!(stringify!($name), "output"), count_tts!($($child)*))?;
                     $(
                         if self.$child != <<$ty as $crate::EventHandler>::PerSubjectOutput>::default() {
                             state.serialize_field(stringify!($child), &self.$child)?;
