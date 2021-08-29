@@ -30,3 +30,6 @@ harness = false
 [[bench]]
 name = "iai"
 harness = false
+
+[profile.release]
+lto = true
