@@ -1,10 +1,11 @@
+use crate::common::Team;
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
-use nom::branch::alt;
-use nom::bytes::complete::{tag, tag_no_case, take, take_while};
+use nom::bytes::complete::{tag, take, take_while};
 use nom::character::complete::{digit1, one_of};
-use nom::{Finish, IResult};
+use nom::combinator::opt;
+use nom::{Finish, IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
 
@@ -17,13 +18,6 @@ pub struct RawEvent<'a> {
     pub ty: RawEventType,
     pub params: &'a str,
 }
-
-// pub enum RawEventToken {
-//     #[error]
-//     Error,
-//     #[regex(r"\d{2}/\d{2}/\d{4} - \d{2}:\d{2}:\d{2}"), |raw| NaiveDateTime::parse_from_str(raw, "%m/$d/%Y - %H:%M%S")]
-//     Date(NaiveDateTime),
-// }
 
 impl<'a> RawEvent<'a> {
     pub fn parse(line: &'a str) -> Result<Self, nom::error::Error<&'a str>> {
@@ -38,7 +32,7 @@ fn event_parser(input: &str) -> IResult<&str, RawEvent> {
     let (input, _) = tag(": ")(input)?;
     let (input, subject) = subject_parser(input)?;
 
-    let (input, _) = tag(" ")(input)?;
+    let (input, _) = opt(tag(" "))(input)?;
     let (input, ty) = event_type_parser(input)?;
 
     Ok((
@@ -87,7 +81,7 @@ fn test_parse_date() {
 #[derive(Debug, PartialEq)]
 pub enum RawSubject<'a> {
     Player(&'a str),
-    Team(&'a str),
+    Team(Team),
     System(&'a str),
     Console,
     World,
@@ -97,39 +91,6 @@ impl<'a> RawSubject<'a> {
     pub fn id(&self) -> Result<SubjectId, SubjectError> {
         self.try_into()
     }
-}
-
-fn subject_parser_world(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = tag("World")(input)?;
-    Ok((input, RawSubject::World))
-}
-
-fn subject_parser_console(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = tag(r#""Console<0><Console><Console>""#)(input)?;
-    Ok((input, RawSubject::Console))
-}
-
-fn subject_parser_team(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = tag(r#"Team ""#)(input)?;
-
-    let (input, team) = alt((tag_no_case("red"), tag_no_case("blue")))(input)?;
-
-    let (input, _) = one_of("\"")(input)?;
-    Ok((input, RawSubject::Team(team)))
-}
-
-fn subject_parser_system_bracket(input: &str) -> IResult<&str, &str> {
-    let (input, _) = tag("[")(input)?;
-
-    let (input, name) = take_while(|c| c != ']')(input)?;
-
-    let (input, _) = tag("]")(input)?;
-    IResult::Ok((input, name))
-}
-
-fn subject_parser_system(input: &str) -> IResult<&str, RawSubject> {
-    let (input, name) = alt((subject_parser_system_bracket, tag("Log"), tag("Tournament")))(input)?;
-    Ok((input, RawSubject::System(name)))
 }
 
 pub fn split_player_subject(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
@@ -150,24 +111,34 @@ pub fn split_player_subject(input: &str) -> IResult<&str, (&str, &str, &str, &st
     Ok((input, (name, user_id, steam_id, team)))
 }
 
-fn subject_parser_player(input: &str) -> IResult<&str, RawSubject> {
-    let (input, _) = one_of("\"")(input)?;
-
-    let (input, subject) = take_while(|c| c != '"')(input)?;
-
-    let (input, _) = one_of("\"")(input)?;
-
-    Ok((input, RawSubject::Player(subject)))
-}
-
 pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
-    alt((
-        subject_parser_console,
-        subject_parser_player,
-        subject_parser_world,
-        subject_parser_team,
-        subject_parser_system,
-    ))(input)
+    if input.starts_with('"') {
+        let (player, input) = input[1..]
+            .split_once('"')
+            .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+        if player.ends_with("e>") {
+            Ok((input, RawSubject::Console))
+        } else {
+            Ok((input, RawSubject::Player(player)))
+        }
+    } else if input.starts_with("Te") {
+        // Team "red" or Team "blue"
+        if &input[6..7] == "r" {
+            Ok((&input[10..], RawSubject::Team(Team::Red)))
+        } else if &input[6..7] == "b" {
+            Ok((&input[11..], RawSubject::Team(Team::Blue)))
+        } else {
+            let (_, input) = input[7..]
+                .split_once('"')
+                .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+            Ok((input, RawSubject::Team(Team::Spectator)))
+        }
+    } else {
+        let (system, input) = input
+            .split_once(' ')
+            .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+        Ok((input, RawSubject::System(system)))
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Logos)]

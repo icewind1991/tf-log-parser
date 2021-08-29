@@ -213,9 +213,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
                     return Err(SubjectError::InvalidSteamId);
                 }
             }
-            RawSubject::Team(team) => {
-                SubjectId::Team(team.parse().map_err(|_| SubjectError::InvalidTeam)?)
-            }
+            RawSubject::Team(team) => SubjectId::Team(*team),
             RawSubject::System(_) => SubjectId::System,
             RawSubject::Console => SubjectId::Console,
             RawSubject::World => SubjectId::World,
@@ -275,7 +273,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
                     team: team.parse().map_err(|_| SubjectError::InvalidTeam)?,
                 }
             }
-            RawSubject::Team(team) => SubjectData::Team(team.parse().unwrap()),
+            RawSubject::Team(team) => SubjectData::Team(*team),
             RawSubject::System(name) => SubjectData::System(name.to_string()),
             RawSubject::Console => SubjectData::Console,
             RawSubject::World => SubjectData::World,
