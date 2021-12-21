@@ -250,6 +250,18 @@ pub fn killed_object_event_parser(input: &str) -> IResult<&str, KilledObjectEven
 }
 
 #[derive(Debug)]
+pub struct ObjectDetonatedEvent<'a> {
+    pub object: Option<&'a str>,
+    pub position: Option<(i32, i32, i32)>,
+}
+
+pub fn object_detonated_event_parser(input: &str) -> IResult<&str, ObjectDetonatedEvent> {
+    let (input, object) = opt(param_parse("object"))(input)?;
+    let (input, position) = opt(param_parse_with("attacker_position", position))(input)?;
+    Ok((input, ObjectDetonatedEvent { object, position }))
+}
+
+#[derive(Debug)]
 pub struct ExtinguishedEvent<'a> {
     pub against: RawSubject<'a>,
     pub with: &'a str,

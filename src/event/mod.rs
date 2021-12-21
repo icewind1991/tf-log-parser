@@ -96,6 +96,7 @@ pub enum GameEvent<'a> {
     Extinguished(ExtinguishedEvent<'a>),
     GameOver(GameOverEvent<'a>),
     FinalScore(FinalScoreEvent),
+    ObjectDetonated(ObjectDetonatedEvent<'a>),
     LogFileClosed,
 }
 
@@ -210,6 +211,9 @@ impl<'a> GameEvent<'a> {
                 GameEvent::FinalScore(final_score_event_parser(raw.params).with_type(raw.ty)?)
             }
             RawEventType::LogFileClosed => GameEvent::LogFileClosed,
+            RawEventType::ObjectDetonated => GameEvent::ObjectDetonated(
+                object_detonated_event_parser(raw.params).with_type(raw.ty)?,
+            ),
             _ => {
                 todo!("{:?} not parsed yet", raw.ty);
             }
