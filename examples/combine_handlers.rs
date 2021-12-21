@@ -12,7 +12,7 @@ handler!(Handler {
 });
 
 fn main() -> Result<(), MainError> {
-    let path = args().skip(1).next().expect("No path provided");
+    let path = args().nth(1).expect("No path provided");
     let content = fs::read_to_string(path)?;
 
     let (

@@ -1,5 +1,5 @@
 use crate::event::{param_parse, param_parse_with, quoted, u_int, ParamIter};
-use crate::raw_event::{subject_parser, RawSubject};
+use crate::raw_event::{against_subject_parser, RawSubject};
 use nom::combinator::opt;
 use nom::number::complete::float;
 use nom::IResult;
@@ -11,7 +11,7 @@ pub struct HealedEvent<'a> {
 }
 
 pub fn healed_event_parser(input: &str) -> IResult<&str, HealedEvent> {
-    let (input, subject) = param_parse_with("against", subject_parser)(input)?;
+    let (input, subject) = param_parse_with("against", against_subject_parser)(input)?;
     let (input, amount) = param_parse_with("healing", quoted(u_int))(input)?;
     Ok((
         input,

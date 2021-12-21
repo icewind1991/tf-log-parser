@@ -1,5 +1,6 @@
 use crate::event::{param_parse, param_parse_with, position, u_int, ParamIter};
-use crate::raw_event::{subject_parser, RawSubject};
+use crate::raw_event::{against_subject_parser, RawSubject};
+
 use nom::bytes::complete::{tag, take_while};
 use nom::combinator::opt;
 use nom::number::complete::float;
@@ -103,7 +104,7 @@ pub fn point_captures_event_parser(input: &str) -> IResult<&str, PointCapturedEv
         (Some((subject_key, subject)), Some((position_key, position_str)))
             if subject_key.starts_with("player") && position_key.starts_with("position") =>
         {
-            let (_, subject) = subject_parser(subject)?;
+            let (_, subject) = against_subject_parser(subject)?;
             let (_, position) = position(position_str)?;
             players.push((subject, position));
         }

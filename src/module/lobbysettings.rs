@@ -57,7 +57,7 @@ impl FromStr for LobbyLeader {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((name, steam_id)) = s.rsplit_once(" (") {
-            if let Ok(steam_id) = steam_id.trim_end_matches(")").parse::<u64>() {
+            if let Ok(steam_id) = steam_id.trim_end_matches(')').parse::<u64>() {
                 Ok(LobbyLeader {
                     name: name.into(),
                     steam_id: steam_id.into(),
@@ -90,8 +90,14 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
+        Self::with_id(0)
+    }
+}
+
+impl Settings {
+    pub fn with_id(id: u32) -> Self {
         Settings {
-            id: 0,
+            id,
             leader: LobbyLeader::default(),
             map: "".to_string(),
             game_type: GameType::Sixes,
@@ -157,8 +163,7 @@ impl LobbySettingsHandler {
                     .strip_prefix("TF2Center Lobby #")
                     .and_then(|s| str::split_once(s, " |"))
                 {
-                    let mut settings = Settings::default();
-                    settings.id = id.parse()?;
+                    let settings = Settings::with_id(id.parse()?);
                     *self = LobbySettingsHandler::Active(settings);
                 }
             }

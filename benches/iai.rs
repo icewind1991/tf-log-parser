@@ -4,7 +4,7 @@ use tf_log_parser::{parse, RawEvent};
 static LOG: &str = include_str!("../test_data/log_2892242.log");
 
 pub fn parse_benchmark() {
-    black_box(parse(black_box(&LOG))).ok();
+    black_box(parse(black_box(LOG))).ok();
 }
 
 pub fn parse_raw() {

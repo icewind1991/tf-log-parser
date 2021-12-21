@@ -104,7 +104,7 @@ impl PlayerSpecificData for MedicStatsBuilder {
             }
             GameEvent::MedicDeath(death) => {
                 let charge = death.charge.unwrap_or_default();
-                if charge >= 95 && charge < 100 {
+                if (95..100).contains(&charge) {
                     self.near_full_charge_death += 1;
                 } else if charge >= 100 {
                     self.drops += 1;

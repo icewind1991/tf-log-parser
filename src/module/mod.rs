@@ -8,7 +8,7 @@ pub use healspread::HealSpread;
 pub use lobbysettings::{
     LobbySettingsError, LobbySettingsHandler, Location, Settings as LobbySettings,
 };
-pub use medicstats::MedicStats;
+pub use medicstats::{MedicStats, MedicStatsBuilder};
 use serde::Serialize;
 use std::marker::PhantomData;
 
@@ -108,11 +108,11 @@ macro_rules! handler {
         paste::paste! {
             #[derive(Default)]
             pub struct $name {
-                $($child: $ty),*
+                pub $($child: $ty),*
             }
 
             pub struct [<$name GlobalOutput>] {
-                $($child: <$ty as $crate::EventHandler>::GlobalOutput),*
+                pub $($child: <$ty as $crate::EventHandler>::GlobalOutput),*
             }
 
             impl serde::Serialize for [<$name GlobalOutput>] {
@@ -144,7 +144,7 @@ macro_rules! handler {
             }
 
             pub struct [<$name PerSubjectOutput>] {
-                $($child: <$ty as $crate::EventHandler>::PerSubjectOutput),*
+                pub $($child: <$ty as $crate::EventHandler>::PerSubjectOutput),*
             }
 
             impl serde::Serialize for [<$name PerSubjectOutput>] {
@@ -235,7 +235,7 @@ impl<T: GlobalData> EventHandler for T {
         _subject: &SubjectData,
         _data: Self::PerSubjectData,
     ) -> Self::PerSubjectOutput {
-        ()
+        
     }
 }
 
@@ -270,7 +270,7 @@ impl<T: PlayerSpecificData + Default> EventHandler for PlayerHandler<T> {
     }
 
     fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
-        ()
+        
     }
 
     fn finish_per_subject(

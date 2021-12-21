@@ -25,7 +25,7 @@ pub struct ChatMessage {
 impl ChatMessage {
     fn from_bare(bare: BareChatMessage, subjects: &SubjectMap) -> Self {
         let (name, steam_id) = match &subjects[bare.subject] {
-            (SubjectData::Player { name, steam_id, .. }, _) => (name.clone(), steam_id.clone()),
+            (SubjectData::Player { name, steam_id, .. }, _) => (name.clone(), *steam_id),
             _ => {
                 unreachable!("only player messages are added");
             }

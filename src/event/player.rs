@@ -1,6 +1,6 @@
 use crate::common::{Class, Team};
 use crate::event::{param_parse, param_parse_with, parse_from_str, position, u_int, ParamIter};
-use crate::raw_event::{subject_parser, RawSubject};
+use crate::raw_event::{against_subject_parser, RawSubject};
 use nom::combinator::opt;
 use nom::IResult;
 use std::net::SocketAddr;
@@ -35,7 +35,7 @@ pub struct DamageEvent<'a> {
 }
 
 pub fn damage_event_parser(input: &str) -> IResult<&str, DamageEvent> {
-    let (input, target) = param_parse_with("against", subject_parser)(input)?;
+    let (input, target) = param_parse_with("against", against_subject_parser)(input)?;
     let mut event = DamageEvent {
         target,
         damage: None,
@@ -62,7 +62,7 @@ pub struct KillEvent<'a> {
 }
 
 pub fn kill_event_parser(input: &str) -> IResult<&str, KillEvent> {
-    let (input, target) = subject_parser(input)?;
+    let (input, target) = against_subject_parser(input)?;
     let (input, weapon) = param_parse("with")(input)?;
     let mut event = KillEvent {
         target,
@@ -88,7 +88,7 @@ pub struct KillAssistEvent<'a> {
 }
 
 pub fn kill_assist_event_parser(input: &str) -> IResult<&str, KillAssistEvent> {
-    let (input, target) = param_parse_with("against", subject_parser)(input)?;
+    let (input, target) = param_parse_with("against", against_subject_parser)(input)?;
     let mut event = KillAssistEvent {
         target,
         attacker_position: None,
@@ -188,7 +188,7 @@ pub struct DominationEvent<'a> {
 }
 
 pub fn domination_event_parser(input: &str) -> IResult<&str, DominationEvent> {
-    let (input, against) = param_parse_with("against", subject_parser)(input)?;
+    let (input, against) = param_parse_with("against", against_subject_parser)(input)?;
     Ok((input, DominationEvent { against }))
 }
 
@@ -198,7 +198,7 @@ pub struct RevengeEvent<'a> {
 }
 
 pub fn revenge_event_parser(input: &str) -> IResult<&str, RevengeEvent> {
-    let (input, against) = param_parse_with("against", subject_parser)(input)?;
+    let (input, against) = param_parse_with("against", against_subject_parser)(input)?;
     Ok((input, RevengeEvent { against }))
 }
 
@@ -235,7 +235,8 @@ pub struct KilledObjectEvent<'a> {
 pub fn killed_object_event_parser(input: &str) -> IResult<&str, KilledObjectEvent> {
     let (input, object) = opt(param_parse("object"))(input)?;
     let (input, weapon) = opt(param_parse("weapon"))(input)?;
-    let (input, object_owner) = opt(param_parse_with("objectowner", subject_parser))(input)?;
+    let (input, object_owner) =
+        opt(param_parse_with("objectowner", against_subject_parser))(input)?;
     let (input, attacker_position) = opt(param_parse_with("attacker_position", position))(input)?;
     Ok((
         input,
@@ -257,7 +258,7 @@ pub struct ExtinguishedEvent<'a> {
 }
 
 pub fn extinguished_event_parser(input: &str) -> IResult<&str, ExtinguishedEvent> {
-    let (input, against) = param_parse_with("against", subject_parser)(input)?;
+    let (input, against) = param_parse_with("against", against_subject_parser)(input)?;
     let (input, with) = param_parse("with")(input)?;
     let (input, attacker_position) = opt(param_parse_with("attacker_position", position))(input)?;
     let (input, victim_position) = opt(param_parse_with("victim_position", position))(input)?;

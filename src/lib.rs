@@ -1,10 +1,13 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
-use crate::module::{ChatMessages, ClassStatsHandler, HealSpread, PlayerHandler};
+use crate::module::{
+    ChatMessages, ClassStatsHandler, HealSpread, MedicStatsBuilder, PlayerHandler,
+};
 pub use crate::subjectmap::SubjectMap;
 use chrono::NaiveDateTime;
 pub use event::{EventMeta, GameEvent};
+use nom::Err;
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
@@ -20,8 +23,8 @@ mod subjectmap;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Malformed logfile: {0}")]
-    Malformed(nom::error::Error<String>),
+    #[error("Malformed logfile")]
+    Malformed,
     #[error("Incomplete logfile")]
     Incomplete,
     #[error("Malformed subject: {0}")]
@@ -29,15 +32,23 @@ pub enum Error {
     #[error("{0}")]
     MalformedEvent(#[from] GameEventError),
 }
-
-impl From<nom::error::Error<&'_ str>> for Error {
-    fn from(e: nom::error::Error<&str>) -> Self {
-        Error::Malformed(nom::error::Error {
-            input: e.input.to_string(),
-            code: e.code,
-        })
+impl From<nom::Err<nom::error::Error<&'_ str>>> for Error {
+    fn from(e: nom::Err<nom::error::Error<&'_ str>>) -> Self {
+        match e {
+            Err::Incomplete(_) => Error::Incomplete,
+            Err::Error(_) => Error::Malformed,
+            Err::Failure(_) => Error::Malformed,
+        }
     }
 }
+
+impl From<nom::error::Error<&'_ str>> for Error {
+    fn from(_: nom::error::Error<&str>) -> Self {
+        Error::Malformed
+    }
+}
+
+type Result<O, E = Error> = std::result::Result<O, E>;
 
 pub fn parse(
     log: &str,
@@ -113,6 +124,6 @@ pub fn parse_with_handler<Handler: EventHandler>(
 handler!(LogHandler {
     chat: ChatMessages,
     heal_spread: PlayerHandler::<HealSpread>,
-    // medic_stats: MedicStatsHandler,
+    medic_stats: PlayerHandler::<MedicStatsBuilder>,
     class_stats: ClassStatsHandler,
 });

@@ -263,7 +263,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
     fn try_from(raw: &RawSubject<'_>) -> Result<Self, Self::Error> {
         Ok(match raw {
             RawSubject::Player(raw) => {
-                let (_, (name, user_id, steam_id, team)) =
+                let (name, user_id, steam_id, team) =
                     split_player_subject(raw).map_err(|_| SubjectError::InvalidUserId)?;
                 SubjectData::Player {
                     name: name.to_string(),

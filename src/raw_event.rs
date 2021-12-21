@@ -1,11 +1,9 @@
 use crate::common::Team;
+use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
-use nom::bytes::complete::{tag, take, take_while};
-use nom::character::complete::{digit1, one_of};
-use nom::combinator::opt;
-use nom::{Finish, IResult, Needed};
+use nom::{IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
 
@@ -20,30 +18,24 @@ pub struct RawEvent<'a> {
 }
 
 impl<'a> RawEvent<'a> {
-    pub fn parse(line: &'a str) -> Result<Self, nom::error::Error<&'a str>> {
-        let (_, event) = event_parser(line).finish()?;
-        Ok(event)
+    pub fn parse(line: &'a str) -> Result<Self> {
+        event_parser(line)
     }
 }
 
-fn event_parser(input: &str) -> IResult<&str, RawEvent> {
-    let (input, date) = date_parser(input)?;
+fn event_parser(input: &str) -> Result<RawEvent> {
+    let date = RawDate(&input[0..21]);
 
-    let (input, _) = tag(": ")(input)?;
-    let (input, subject) = subject_parser(input)?;
+    let (input, subject) = subject_parser(&input[23..])?;
 
-    let (input, _) = opt(tag(" "))(input)?;
-    let (input, ty) = event_type_parser(input)?;
+    let (input, ty) = event_type_parser(input.trim_start())?;
 
-    Ok((
-        input,
-        RawEvent {
-            date,
-            subject,
-            ty,
-            params: input.trim(),
-        },
-    ))
+    Ok(RawEvent {
+        date,
+        subject,
+        ty,
+        params: input.trim(),
+    })
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -62,11 +54,6 @@ impl<'a> TryFrom<RawDate<'a>> for NaiveDateTime {
                 ),
         )
     }
-}
-
-fn date_parser(input: &str) -> IResult<&str, RawDate> {
-    let (input, raw) = take(21usize)(input)?;
-    Ok((input, RawDate(raw)))
 }
 
 #[test]
@@ -93,29 +80,40 @@ impl<'a> RawSubject<'a> {
     }
 }
 
-pub fn split_player_subject(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
-    let (input, name) = take_while(|c| c != '<')(input)?;
+pub fn split_player_subject(input: &str) -> Result<(&str, &str, &str, &str)> {
+    let mut parts = input.splitn(4, '<');
+    let (name, user_id, steam_id, team) =
+        if let (Some(name), Some(user_id), Some(steam_id), Some(team)) =
+            (parts.next(), parts.next(), parts.next(), parts.next())
+        {
+            (
+                name,
+                &user_id[0..user_id.len() - 1],
+                &steam_id[0..steam_id.len() - 1],
+                &team[0..team.len() - 1],
+            )
+        } else {
+            return Err(Error::Incomplete);
+        };
 
-    let (input, _) = one_of("<")(input)?;
-    let (input, user_id) = digit1(input)?;
-    let (input, _) = one_of(">")(input)?;
-
-    let (input, _) = one_of("<")(input)?;
-    let (input, steam_id) = take_while(|c| c != '>')(input)?;
-    let (input, _) = one_of(">")(input)?;
-
-    let (input, _) = one_of("<")(input)?;
-    let (input, team) = take_while(|c| c != '>')(input)?;
-    let (input, _) = one_of(">")(input)?;
-
-    Ok((input, (name, user_id, steam_id, team)))
+    Ok((name, user_id, steam_id, team))
 }
 
-pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
-    if input.starts_with('"') {
-        let (player, input) = input[1..]
-            .split_once('"')
-            .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+#[test]
+fn test_split_player_subject() {
+    assert_eq!(
+        ("Fin", "4", "[U:1:129852188]", "Blue"),
+        split_player_subject("Fin<4><[U:1:129852188]><Blue>").unwrap()
+    )
+}
+
+pub fn against_subject_parser(input: &str) -> IResult<&str, RawSubject> {
+    subject_parser(input).map_err(|_| nom::Err::Incomplete(Needed::Unknown))
+}
+
+pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
+    if let Some(input) = input.strip_prefix('"') {
+        let (player, input) = input.split_once('"').ok_or(Error::Incomplete)?;
         if player.ends_with("e>") {
             Ok((input, RawSubject::Console))
         } else {
@@ -128,15 +126,11 @@ pub fn subject_parser(input: &str) -> IResult<&str, RawSubject> {
         } else if &input[6..7] == "b" {
             Ok((&input[11..], RawSubject::Team(Team::Blue)))
         } else {
-            let (_, input) = input[7..]
-                .split_once('"')
-                .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+            let (_, input) = input[7..].split_once('"').ok_or(Error::Incomplete)?;
             Ok((input, RawSubject::Team(Team::Spectator)))
         }
     } else {
-        let (system, input) = input
-            .split_once(' ')
-            .ok_or_else(|| nom::Err::Incomplete(Needed::Unknown))?;
+        let (system, input) = input.split_once(' ').ok_or(Error::Incomplete)?;
         Ok((input, RawSubject::System(system)))
     }
 }
@@ -263,7 +257,7 @@ pub enum RawEventType {
     Unknown,
 }
 
-fn event_type_parser(input: &str) -> IResult<&str, RawEventType> {
+fn event_type_parser(input: &str) -> Result<(&str, RawEventType)> {
     let mut lexer = Lexer::new(input);
     let ty = lexer.next().unwrap_or(RawEventType::Unknown);
     Ok((lexer.remainder(), ty))

@@ -96,7 +96,7 @@ impl EventHandler for ClassStatsHandler {
     }
 
     fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
-        ()
+        
     }
 
     fn finish_per_subject(
