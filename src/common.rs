@@ -17,6 +17,12 @@ pub enum Team {
     Spectator,
 }
 
+impl Default for Team {
+    fn default() -> Self {
+        Team::Spectator
+    }
+}
+
 impl Team {
     pub fn as_str(self) -> &'static str {
         match self {
@@ -270,7 +276,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
                     user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
                     steam_id: SteamID::from_steam3(steam_id)
                         .map_err(|_| SubjectError::InvalidSteamId)?,
-                    team: team.parse().map_err(|_| SubjectError::InvalidTeam)?,
+                    team: team.parse().unwrap_or_default(),
                 }
             }
             RawSubject::Team(team) => SubjectData::Team(*team),
