@@ -1,5 +1,7 @@
 use crate::raw_event::{split_player_subject, RawSubject};
+use crate::{Error, Result};
 use enum_iterator::{all, Sequence};
+use memchr::{memchr, memrchr};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
@@ -8,7 +10,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 use steamid_ng::{AccountType, Instance, SteamID, Universe};
-use thiserror::Error;
 
 #[derive(Serialize, Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd, Hash)]
 pub enum Team {
@@ -204,12 +205,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
     fn try_from(raw: &RawSubject) -> Result<Self, Self::Error> {
         Ok(match raw {
             RawSubject::Player(raw) => {
-                if let Some(raw_account_id) = raw
-                    .rsplit_once(":")
-                    .map(|(_, s)| s)
-                    .and_then(|s| s.split_once(']'))
-                    .map(|(s, _)| s)
-                {
+                if let Some(raw_account_id) = find_between_end(raw, b':', b']') {
                     SubjectId::Player(
                         raw_account_id
                             .parse()
@@ -253,7 +249,7 @@ impl SubjectData {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum SubjectError {
     #[error("Invalid user id")]
     InvalidUserId,
@@ -316,4 +312,21 @@ impl Serialize for SteamId3 {
     {
         self.0.steam3().serialize(serializer)
     }
+}
+
+pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
+    let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
+    Ok((&input[..end], &input[(end + offset)..]))
+}
+
+pub fn find_between_end(input: &str, start: u8, end: u8) -> Option<&str> {
+    let end = memrchr(end, input.as_bytes())?;
+    let start = memrchr(start, &input.as_bytes()[0..end])?;
+    Some(&input[(start + 1)..end])
+}
+
+#[test]
+fn test_find_between_end() {
+    assert_eq!(Some("foo"), find_between_end("asd[foo]bar", b'[', b']'));
+    assert_eq!(None, find_between_end("asd]foo[bar", b'[', b']'));
 }

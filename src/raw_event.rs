@@ -1,9 +1,8 @@
-use crate::common::Team;
+use crate::common::{split_once, Team};
 use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
-use memchr::memchr;
 use nom::{IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
@@ -134,11 +133,6 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
         let (system, input) = split_once(input, b' ', 0)?;
         Ok((input, RawSubject::System(system)))
     }
-}
-
-fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
-    let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
-    Ok((&input[..end], &input[(end + offset)..]))
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Logos)]

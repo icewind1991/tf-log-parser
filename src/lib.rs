@@ -21,7 +21,7 @@ mod common;
 pub mod event;
 #[macro_use]
 pub mod module;
-mod raw_event;
+pub mod raw_event;
 mod subjectmap;
 
 #[derive(Error, Debug)]

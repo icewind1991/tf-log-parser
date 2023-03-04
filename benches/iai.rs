@@ -1,5 +1,7 @@
 use iai::black_box;
-use tf_log_parser::{parse, LineSplit, RawEvent};
+use std::convert::TryFrom;
+use tf_log_parser::raw_event::RawSubject;
+use tf_log_parser::{parse, LineSplit, RawEvent, SubjectId};
 
 static LOG: &str = include_str!("../test_data/log_2892242.log");
 
@@ -15,5 +17,9 @@ pub fn parse_raw() {
             .count(),
     );
 }
+pub fn subject_id() {
+    let raw = black_box(RawSubject::Player("Kumis<10><[U:1:169048576]><Blue>"));
+    black_box(SubjectId::try_from(&raw).unwrap());
+}
 
-iai::main!(parse_benchmark, parse_raw);
+iai::main!(parse_benchmark, parse_raw, subject_id);
