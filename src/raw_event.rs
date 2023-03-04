@@ -28,13 +28,13 @@ fn event_parser(input: &str) -> Result<RawEvent> {
 
     let (input, subject) = subject_parser(&input[23..])?;
 
-    let (input, ty) = event_type_parser(input.trim_start())?;
+    let (input, ty) = event_type_parser(&input[1..])?;
 
     Ok(RawEvent {
         date,
         subject,
         ty,
-        params: input.trim(),
+        params: &input[1..],
     })
 }
 
@@ -130,8 +130,8 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
             Ok((input, RawSubject::Team(Team::Spectator)))
         }
     } else {
-        let (system, input) = input.split_once(' ').ok_or(Error::Incomplete)?;
-        Ok((input, RawSubject::System(system)))
+        let (system, _) = input.split_once(' ').ok_or(Error::Incomplete)?;
+        Ok((&input[system.len()..], RawSubject::System(system)))
     }
 }
 
