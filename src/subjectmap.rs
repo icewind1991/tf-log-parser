@@ -1,11 +1,20 @@
 use crate::raw_event::RawSubject;
 use crate::{SubjectData, SubjectError, SubjectId};
-use std::collections::BTreeMap;
+use ahash::{AHashMap, RandomState};
 use std::convert::TryInto;
 use std::ops::{Index, IndexMut};
 
 #[derive(Default)]
-pub struct SubjectMap<T = ()>(BTreeMap<SubjectId, (SubjectData, T)>);
+pub struct SubjectMap<T = ()>(AHashMap<SubjectId, (SubjectData, T)>);
+
+impl<T> SubjectMap<T> {
+    pub fn with_capacity(cap: usize) -> Self {
+        SubjectMap(AHashMap::with_capacity_and_hasher(
+            cap,
+            RandomState::default(),
+        ))
+    }
+}
 
 impl<T> Index<SubjectId> for SubjectMap<T> {
     type Output = (SubjectData, T);
@@ -63,7 +72,7 @@ impl<T> IntoIterator for SubjectMap<T> {
 }
 
 pub struct SubjectMapIter<T> {
-    iter: std::collections::btree_map::IntoIter<SubjectId, (SubjectData, T)>,
+    iter: std::collections::hash_map::IntoIter<SubjectId, (SubjectData, T)>,
 }
 
 impl<T> Iterator for SubjectMapIter<T> {

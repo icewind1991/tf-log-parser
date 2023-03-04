@@ -3,10 +3,10 @@ use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
+use memchr::memchr;
 use nom::{IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
-use memchr::memchr;
 
 /// Event that has only been minimally parsed.
 /// that way we can decide if we're interested in handling the event before parsing further

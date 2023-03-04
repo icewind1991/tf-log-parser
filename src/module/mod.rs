@@ -235,7 +235,6 @@ impl<T: GlobalData> EventHandler for T {
         _subject: &SubjectData,
         _data: Self::PerSubjectData,
     ) -> Self::PerSubjectOutput {
-        
     }
 }
 
@@ -269,9 +268,7 @@ impl<T: PlayerSpecificData + Default> EventHandler for PlayerHandler<T> {
         subject_data.handle_event(meta, subject, event)
     }
 
-    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {
-        
-    }
+    fn finish_global(self, _subjects: &SubjectMap) -> Self::GlobalOutput {}
 
     fn finish_per_subject(
         &mut self,

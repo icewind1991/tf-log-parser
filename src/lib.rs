@@ -9,12 +9,12 @@ use crate::module::{
 pub use crate::subjectmap::SubjectMap;
 use chrono::NaiveDateTime;
 pub use event::{EventMeta, GameEvent};
+use memchr::memmem::{find_iter, FindIter};
 use nom::Err;
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
-use memchr::memmem::{find_iter, FindIter};
 use thiserror::Error;
 
 mod common;
@@ -81,7 +81,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     let mut handler = Handler::default();
 
     let mut start_time: Option<NaiveDateTime> = None;
-    let mut subjects = SubjectMap::<Handler::PerSubjectData>::default();
+    let mut subjects = SubjectMap::<Handler::PerSubjectData>::with_capacity(32);
 
     for event_res in events {
         let raw_event = event_res?;
@@ -141,7 +141,7 @@ impl<'a> LineSplit<'a> {
         LineSplit {
             input,
             start: 0,
-            iter: find_iter(input.as_bytes(), b"L ")
+            iter: find_iter(input.as_bytes(), b"L "),
         }
     }
 }
@@ -155,15 +155,13 @@ impl<'a> Iterator for LineSplit<'a> {
                 let line = &self.input[self.start..next];
                 self.start = next + 2;
                 Some(line)
-            },
+            }
             None if self.start < self.input.len() => {
                 let line = &self.input[self.start..];
                 self.start = self.input.len();
                 Some(line)
             }
-            _ => {
-                None
-            }
+            _ => None,
         }
     }
 }

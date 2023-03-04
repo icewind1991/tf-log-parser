@@ -1,5 +1,5 @@
 use iai::black_box;
-use tf_log_parser::{LineSplit, parse, RawEvent};
+use tf_log_parser::{parse, LineSplit, RawEvent};
 
 static LOG: &str = include_str!("../test_data/log_2892242.log");
 

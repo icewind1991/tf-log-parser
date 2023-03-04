@@ -1,5 +1,5 @@
 use crate::raw_event::{split_player_subject, RawSubject};
-use enum_iterator::{Sequence, all};
+use enum_iterator::{all, Sequence};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;

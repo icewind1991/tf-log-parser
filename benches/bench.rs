@@ -1,7 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs::read_to_string;
 use std::time::Duration;
-use tf_log_parser::{parse, GameEvent, RawEvent, LineSplit};
+use tf_log_parser::{parse, GameEvent, LineSplit, RawEvent};
 
 pub fn parse_benchmark(c: &mut Criterion) {
     let input = read_to_string("test_data/log_2892242.log").unwrap();
