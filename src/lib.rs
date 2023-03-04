@@ -14,6 +14,7 @@ pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
+use memchr::memmem::{find_iter, FindIter};
 use thiserror::Error;
 
 mod common;
@@ -73,8 +74,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     ),
     Error,
 > {
-    let events = log
-        .split("L ")
+    let events = LineSplit::new(log)
         .filter(|line| !line.is_empty())
         .map(RawEvent::parse);
 
@@ -129,3 +129,49 @@ handler!(LogHandler {
     medic_stats: PlayerHandler::<MedicStatsBuilder>,
     class_stats: ClassStatsHandler,
 });
+
+pub struct LineSplit<'a> {
+    input: &'a str,
+    start: usize,
+    iter: FindIter<'a, 'static>,
+}
+
+impl<'a> LineSplit<'a> {
+    pub fn new(input: &'a str) -> Self {
+        LineSplit {
+            input,
+            start: 0,
+            iter: find_iter(input.as_bytes(), b"L ")
+        }
+    }
+}
+
+impl<'a> Iterator for LineSplit<'a> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next() {
+            Some(next) => {
+                let line = &self.input[self.start..next];
+                self.start = next + 2;
+                Some(line)
+            },
+            None if self.start < self.input.len() => {
+                let line = &self.input[self.start..];
+                self.start = self.input.len();
+                Some(line)
+            }
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+#[test]
+fn test_split() {
+    let input = std::fs::read_to_string("test_data/log_2892242.log").unwrap();
+    let split: Vec<_> = LineSplit::new(&input).collect();
+    let expected: Vec<_> = input.split("L ").collect();
+    assert_eq!(expected, split);
+}

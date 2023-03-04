@@ -1,5 +1,5 @@
 use iai::black_box;
-use tf_log_parser::{parse, RawEvent};
+use tf_log_parser::{LineSplit, parse, RawEvent};
 
 static LOG: &str = include_str!("../test_data/log_2892242.log");
 
@@ -9,8 +9,7 @@ pub fn parse_benchmark() {
 
 pub fn parse_raw() {
     black_box(
-        black_box(&LOG)
-            .split("L ")
+        LineSplit::new(black_box(&LOG))
             .filter(|line| !line.is_empty())
             .flat_map(RawEvent::parse)
             .count(),
