@@ -17,8 +17,13 @@ pub struct ClassStats {
 #[derive(Default)]
 pub struct ClassStatsHandler {
     active: bool,
-    classes: BTreeMap<SubjectId, Class>,
-    deaths: BTreeMap<SubjectId, ClassMap<u8>>,
+    data: BTreeMap<SubjectId, ClassStatData>,
+}
+
+#[derive(Default)]
+pub struct ClassStatData {
+    class: Class,
+    deaths: ClassMap<u8>,
 }
 
 impl ClassStatsHandler {
@@ -26,8 +31,12 @@ impl ClassStatsHandler {
         subject
             .id()
             .ok()
-            .and_then(|id| self.classes.get(&id))
-            .copied()
+            .and_then(|id| self.data.get(&id))
+            .map(|data| data.class)
+    }
+
+    fn data_mut(&mut self, id: SubjectId) -> &mut ClassStatData {
+        self.data.entry(id).or_default()
     }
 }
 
@@ -59,7 +68,7 @@ impl EventHandler for ClassStatsHandler {
         match event {
             GameEvent::Spawned(SpawnEvent { class: Some(class) })
             | GameEvent::RoleChange(RoleChangeEvent { class: Some(class) }) => {
-                self.classes.insert(subject, *class);
+                self.data_mut(subject).class = *class;
             }
             GameEvent::RoundStart => {
                 self.active = true;
@@ -72,8 +81,8 @@ impl EventHandler for ClassStatsHandler {
                     subject_data.kills[target_class] += 1;
                 }
                 if let Ok(target) = kill.target.id() {
-                    if let Some(subject_class) = self.classes.get(&subject) {
-                        self.deaths.entry(target).or_default()[*subject_class] += 1;
+                    if let Some(subject_class) = self.data.get(&subject).map(|data| data.class) {
+                        self.data_mut(target).deaths[subject_class] += 1;
                     }
                 }
             }
@@ -102,7 +111,7 @@ impl EventHandler for ClassStatsHandler {
         subject: &SubjectData,
         mut data: Self::PerSubjectData,
     ) -> Self::PerSubjectOutput {
-        data.deaths = self.deaths.remove(&subject.id()).unwrap_or_default();
+        data.deaths = self.data.remove(&subject.id()).unwrap_or_default().deaths;
         data
     }
 }

@@ -83,6 +83,12 @@ impl Class {
     }
 }
 
+impl Default for Class {
+    fn default() -> Self {
+        Class::Scout
+    }
+}
+
 impl FromStr for Class {
     type Err = ();
 
