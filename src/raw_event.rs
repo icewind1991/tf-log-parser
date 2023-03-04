@@ -6,6 +6,7 @@ use logos::{Lexer, Logos};
 use nom::{IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
+use memchr::memchr;
 
 /// Event that has only been minimally parsed.
 /// that way we can decide if we're interested in handling the event before parsing further
@@ -113,7 +114,7 @@ pub fn against_subject_parser(input: &str) -> IResult<&str, RawSubject> {
 
 pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
     if let Some(input) = input.strip_prefix('"') {
-        let (player, input) = input.split_once('"').ok_or(Error::Incomplete)?;
+        let (player, input) = split_once(input, b'"', 1)?;
         if player.ends_with("e>") {
             Ok((input, RawSubject::Console))
         } else {
@@ -126,13 +127,18 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
         } else if &input[6..7] == "b" {
             Ok((&input[11..], RawSubject::Team(Team::Blue)))
         } else {
-            let (_, input) = input[7..].split_once('"').ok_or(Error::Incomplete)?;
+            let (_, input) = split_once(&input[7..], b'"', 1)?;
             Ok((input, RawSubject::Team(Team::Spectator)))
         }
     } else {
-        let (system, _) = input.split_once(' ').ok_or(Error::Incomplete)?;
-        Ok((&input[system.len()..], RawSubject::System(system)))
+        let (system, input) = split_once(input, b' ', 0)?;
+        Ok((input, RawSubject::System(system)))
     }
+}
+
+fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
+    let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
+    Ok((&input[..end], &input[(end + offset)..]))
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Logos)]

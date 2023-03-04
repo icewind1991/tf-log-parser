@@ -1,3 +1,5 @@
+extern crate core;
+
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
