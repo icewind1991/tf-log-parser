@@ -1,5 +1,5 @@
 use crate::raw_event::{split_player_subject, RawSubject};
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::{Sequence, all};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
@@ -52,7 +52,7 @@ impl FromStr for Team {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, IntoEnumIterator, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Sequence, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Class {
     Scout,
@@ -146,7 +146,7 @@ where
         S: Serializer,
     {
         let mut map = serializer.serialize_map(None)?;
-        for class in Class::into_enum_iter() {
+        for class in all::<Class>() {
             let stats = &self[class];
             if stats != &T::default() {
                 map.serialize_entry(&class, stats)?;

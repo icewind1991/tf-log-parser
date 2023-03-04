@@ -10,7 +10,7 @@ repository = "https://github.com/icewind1991/tf-log-parser"
 [dependencies]
 steamid-ng = "1"
 nom = "7"
-enum-iterator = "0.7"
+enum-iterator = "1.4"
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
@@ -20,7 +20,7 @@ paste = "1"
 logos = { version = "0.12", git = "https://github.com/icewind1991/logos", branch = "chunk-const-generics" }
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.4"
 iai = "0.1"
 
 [[bench]]
