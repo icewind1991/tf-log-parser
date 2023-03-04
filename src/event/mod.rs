@@ -285,7 +285,14 @@ fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<&'a str, T>>(
 
         let input = &input[has_open as usize..];
 
-        Ok((input.trim_start_matches(' '), value))
+        debug_assert!(
+            input.is_empty() || input.as_bytes()[0] == b' ',
+            "\"{}\" starts with space",
+            input
+        );
+
+        let input = &input[(!input.is_empty() as usize)..];
+        Ok((input, value))
     }
 }
 

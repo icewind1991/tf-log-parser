@@ -30,11 +30,13 @@ fn event_parser(input: &str) -> Result<RawEvent> {
 
     let (input, ty) = event_type_parser(&input[1..])?;
 
+    let params = &input[(!input.is_empty() as usize)..];
+
     Ok(RawEvent {
         date,
         subject,
         ty,
-        params: &input[1..],
+        params,
     })
 }
 

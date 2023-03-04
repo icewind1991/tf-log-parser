@@ -138,6 +138,7 @@ pub struct LineSplit<'a> {
 
 impl<'a> LineSplit<'a> {
     pub fn new(input: &'a str) -> Self {
+        let input = &input[2..]; //skip first
         LineSplit {
             input,
             start: 0,
@@ -152,7 +153,7 @@ impl<'a> Iterator for LineSplit<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(next) => {
-                let line = &self.input[self.start..next];
+                let line = &self.input[self.start..next - 1]; // -1 for the newline we strip
                 self.start = next + 2;
                 Some(line)
             }
