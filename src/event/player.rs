@@ -63,7 +63,7 @@ pub struct KillEvent<'a> {
 
 pub fn kill_event_parser(input: &str) -> IResult<&str, KillEvent> {
     let (input, target) = against_subject_parser(input)?;
-    let (input, weapon) = param_parse("with")(input)?;
+    let (input, weapon) = param_parse("with")(&input[1..])?;
     let mut event = KillEvent {
         target,
         weapon,

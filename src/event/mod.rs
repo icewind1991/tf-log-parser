@@ -275,18 +275,17 @@ fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<&'a str, T>>(
     parser: P,
 ) -> impl Fn(&'a str) -> IResult<&'a str, T> {
     move |input: &str| {
-        let (input, _) = opt(tag(" "))(input)?;
-        let (input, open_tag) = opt(tag("("))(input)?;
+        debug_assert!(input.as_bytes()[0] != b' ');
+        let has_open = input.as_bytes()[0] == b'(';
+        let input = &input[has_open as usize..];
 
-        let (input, _) = tag(key)(input)?;
-        let (input, _) = tag(r#" "#)(input)?;
+        let input = &input[key.len() + 1..]; // skip space + key
 
         let (input, value) = parser(input)?;
 
-        if open_tag.is_some() {
-            let (_input, _) = tag(")")(input)?;
-        }
-        Ok((input.trim_start(), value))
+        let input = &input[has_open as usize..];
+
+        Ok((input.trim_start_matches(' '), value))
     }
 }
 
