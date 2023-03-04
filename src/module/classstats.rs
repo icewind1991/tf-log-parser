@@ -77,13 +77,13 @@ impl EventHandler for ClassStatsHandler {
                 self.active = false;
             }
             GameEvent::Kill(kill) if self.active => {
-                if let Some(target_class) = self.get_class(&kill.target) {
-                    subject_data.kills[target_class] += 1;
-                }
                 if let Ok(target) = kill.target.id() {
-                    if let Some(subject_class) = self.data.get(&subject).map(|data| data.class) {
-                        self.data_mut(target).deaths[subject_class] += 1;
+                    let subject_class = self.data.get(&subject).map(|data| data.class);
+                    let target_data = self.data_mut(target);
+                    if let Some(subject_class) = subject_class {
+                        target_data.deaths[subject_class] += 1;
                     }
+                    subject_data.kills[target_data.class] += 1;
                 }
             }
             GameEvent::KillAssist(assist) if self.active => {
