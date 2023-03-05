@@ -160,7 +160,7 @@ impl<'a> Iterator for LineSplit<'a> {
             None if self.start < self.input.len() => {
                 let line = &self.input[self.start..];
                 self.start = self.input.len();
-                Some(line)
+                Some(line.trim_end_matches("\n"))
             }
             _ => None,
         }
@@ -171,6 +171,11 @@ impl<'a> Iterator for LineSplit<'a> {
 fn test_split() {
     let input = std::fs::read_to_string("test_data/log_2892242.log").unwrap();
     let split: Vec<_> = LineSplit::new(&input).collect();
-    let expected: Vec<_> = input.split("L ").collect();
+    let expected: Vec<_> = input
+        .split("L ")
+        .filter(|line| !line.is_empty())
+        .map(|line| line.trim_end_matches("\n"))
+        .collect();
+    assert_eq!(expected.len(), split.len());
     assert_eq!(expected, split);
 }
