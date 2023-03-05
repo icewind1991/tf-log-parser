@@ -19,6 +19,7 @@ pub struct RawEvent<'a> {
 
 impl<'a> RawEvent<'a> {
     pub fn parse(line: &'a str) -> Result<Self> {
+        debug_assert!(!line.ends_with("\n"));
         event_parser(line)
     }
 }

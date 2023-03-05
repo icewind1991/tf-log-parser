@@ -1,3 +1,4 @@
+use crate::event::EventFieldFromStr;
 use crate::raw_event::{split_player_subject, RawSubject};
 use crate::{Error, Result};
 use enum_iterator::{all, Sequence};
@@ -17,6 +18,8 @@ pub enum Team {
     Blue,
     Spectator,
 }
+
+impl EventFieldFromStr for Team {}
 
 impl Default for Team {
     fn default() -> Self {
@@ -67,6 +70,8 @@ pub enum Class {
     Spy,
 }
 
+impl EventFieldFromStr for Class {}
+
 impl Class {
     pub fn as_str(self) -> &'static str {
         match self {
@@ -94,15 +99,15 @@ impl FromStr for Class {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "scout" => Ok(Class::Scout),
-            "soldier" => Ok(Class::Soldier),
-            "pyro" => Ok(Class::Pyro),
-            "demoman" => Ok(Class::DemoMan),
-            "heavyweapons" => Ok(Class::HeavyWeapons),
-            "engineer" => Ok(Class::Engineer),
-            "medic" => Ok(Class::Medic),
-            "sniper" => Ok(Class::Sniper),
-            "spy" => Ok(Class::Spy),
+            "Scout" | "scout" => Ok(Class::Scout),
+            "Soldier" | "soldier" => Ok(Class::Soldier),
+            "Pyro" | "pyro" => Ok(Class::Pyro),
+            "Demoman" | "demoman" => Ok(Class::DemoMan),
+            "Heavyweapons" | "heavyweapons" | "Heavy" | "heavy" => Ok(Class::HeavyWeapons),
+            "Engineer" | "engineer" => Ok(Class::Engineer),
+            "Medic" | "medic" => Ok(Class::Medic),
+            "Sniper" | "sniper" => Ok(Class::Sniper),
+            "Spy" | "spy" => Ok(Class::Spy),
             _ => Err(()),
         }
     }

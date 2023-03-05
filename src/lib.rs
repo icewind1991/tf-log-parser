@@ -1,5 +1,3 @@
-extern crate core;
-
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
 use crate::event::GameEventError;
 pub use crate::module::EventHandler;
@@ -8,13 +6,14 @@ use crate::module::{
 };
 pub use crate::subjectmap::SubjectMap;
 use chrono::NaiveDateTime;
-pub use event::{EventMeta, GameEvent};
+pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
 use nom::Err;
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
+pub use tf_log_parser_derive::Event;
 use thiserror::Error;
 
 mod common;
@@ -53,6 +52,9 @@ impl From<nom::error::Error<&'_ str>> for Error {
 
 type Result<O, E = Error> = std::result::Result<O, E>;
 
+#[doc(hidden)]
+pub type IResult<'a, O> = nom::IResult<&'a str, O>;
+
 pub fn parse(
     log: &str,
 ) -> Result<
@@ -74,9 +76,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     ),
     Error,
 > {
-    let events = LineSplit::new(log)
-        .filter(|line| !line.is_empty())
-        .map(RawEvent::parse);
+    let events = LineSplit::new(log).map(RawEvent::parse);
 
     let mut handler = Handler::default();
 
@@ -160,7 +160,7 @@ impl<'a> Iterator for LineSplit<'a> {
             None if self.start < self.input.len() => {
                 let line = &self.input[self.start..];
                 self.start = self.input.len();
-                Some(line.trim_end_matches("\n"))
+                Some(dbg!(line.trim_end_matches("\n")))
             }
             _ => None,
         }

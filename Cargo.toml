@@ -20,6 +20,7 @@ paste = "1"
 logos = "0.12"
 memchr = "2.5.0"
 ahash = "0.8.3"
+tf-log-parser-derive = { version = "0.1", path = "./derive" }
 
 [dev-dependencies]
 criterion = "0.4"
