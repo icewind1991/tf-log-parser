@@ -6,8 +6,9 @@ mod event;
 
 use crate::event::Event;
 use proc_macro2::TokenStream;
-use std::fmt::Debug;
-use syn::{parse_macro_input, DeriveInput, Result};
+use quote::ToTokens;
+use std::fmt::{Debug, Display};
+use syn::{parse_macro_input, DeriveInput, Error, Result};
 
 /// Derive the `Event` trait for a struct
 #[proc_macro_derive(Event, attributes(event))]
@@ -35,4 +36,8 @@ trait Derivable {
 
 trait DeriveParams: Sized + Debug {
     fn parse(input: &DeriveInput) -> Result<Self>;
+}
+
+fn err<R, T: ToTokens, U: Display>(msg: U, span: T) -> Result<R> {
+    return Err(Error::new_spanned(&span, msg));
 }

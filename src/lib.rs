@@ -160,7 +160,7 @@ impl<'a> Iterator for LineSplit<'a> {
             None if self.start < self.input.len() => {
                 let line = &self.input[self.start..];
                 self.start = self.input.len();
-                Some(dbg!(line.trim_end_matches("\n")))
+                Some(line.trim_end_matches("\n"))
             }
             _ => None,
         }

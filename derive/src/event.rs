@@ -1,18 +1,9 @@
-use crate::{Derivable, DeriveParams};
-use proc_macro2::{Ident, TokenStream};
+use crate::{err, Derivable, DeriveParams};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{Data, DeriveInput, Error, Field, Fields, Generics, Lifetime, Result, Type, TypePath};
+use syn::spanned::Spanned;
+use syn::{Data, DeriveInput, Field, Fields, Generics, Lifetime, Result, Type, TypePath};
 use syn_util::{contains_attribute, get_attribute_value};
-
-macro_rules! bail {
-    ($msg:expr $(,)?) => {
-        return Err(Error::new(Span::call_site(), &$msg[..]))
-    };
-
-    ( $msg:expr => $span_to_blame:expr $(,)? ) => {
-        return Err(Error::new_spanned(&$span_to_blame, $msg))
-    };
-}
 
 pub struct Event;
 
@@ -29,30 +20,10 @@ impl Derivable for Event {
         let required_fields = required_params
             .map(|param| {
                 let field_name = &param.field_name;
+                let parser = param.parser();
+                let after = param.skip_after();
 
-                let parser = match (&param.param_name, param.quoted) {
-                    (Some(param_name), true) => {
-                        quote_spanned!(field_name.span() => param_parse_with(#param_name, quoted(parse_field)))
-                    }
-                    (Some(param_name), false) => {
-                        quote_spanned!(field_name.span() => param_parse_with(#param_name, parse_field))
-                    }
-                    (None, true) => {
-                        quote_spanned!(field_name.span() => quoted(parse_field))
-                    }
-                    (None, false) => {
-                        quote_spanned!(field_name.span() => parse_field)
-                    }
-                };
-
-                let skip_after = param.skip_after as usize;
-                let after = if skip_after > 0 {
-                    quote_spanned!(field_name.span() => let input = &input[#skip_after..];)
-                } else {
-                    quote!()
-                };
-
-                Ok(quote_spanned!(field_name.span() =>
+                Ok(quote_spanned!(param.span() =>
                     #[allow(unused_variables)]
                     let (input, #field_name) = #parser(input)?;
                     #after
@@ -79,7 +50,7 @@ impl Derivable for Event {
                 .map(|param| {
                     let field_name = &param.field_name;
                     let Some(param_name) = param.param_name.as_deref() else {
-                        bail!("optional fields can't be unnamed" => param.field_name)
+                        return err("optional fields can't be unnamed", &param.field_name);
                     };
 
                     let parser = if param.quoted {
@@ -136,10 +107,10 @@ pub struct EventParams {
 impl DeriveParams for EventParams {
     fn parse(input: &DeriveInput) -> Result<EventParams> {
         let Data::Struct(data) = &input.data else {
-            bail!("only supported on structs" => input)
+            return err("only supported on structs", input);
         };
         let Fields::Named(fields) = &data.fields else {
-            bail!("only supported with named fields" => input)
+            return err("only supported with named fields", input);
         };
         let name = input.ident.clone();
         let generics = input.generics.clone();
@@ -152,7 +123,10 @@ impl DeriveParams for EventParams {
         let mut last_optional = false;
         for param in params.iter() {
             if last_optional > param.optional {
-                bail!("optional fields are required to be at the end" => param.field_name)
+                return err(
+                    "optional fields are required to be at the end",
+                    &param.field_name,
+                );
             }
             last_optional = param.optional;
         }
@@ -162,14 +136,13 @@ impl DeriveParams for EventParams {
         {
             Lifetime::new(&lifetime, name.span())
         } else {
-            let mut lifetimes = input.generics.lifetimes();
+            let mut lifetimes = input.generics.lifetimes().cloned();
             let lifetime = lifetimes
                 .next()
-                .cloned()
                 .map(|lifetime| lifetime.lifetime)
                 .unwrap_or_else(|| Lifetime::new("'_", name.span()));
             if lifetimes.next().is_some() {
-                bail!("For structs with more than one lifetime, manually specifiying the lifetime is required" => name);
+                return err("For structs with more than one lifetime, manually specifiying the lifetime is required", name);
             }
             lifetime
         };
@@ -185,6 +158,7 @@ impl DeriveParams for EventParams {
 
 #[derive(Debug)]
 pub struct EventParam {
+    span: Span,
     field_name: Ident,
     param_name: Option<String>,
     optional: bool,
@@ -218,16 +192,44 @@ impl EventParam {
             get_attribute_value(&input.attrs, &["event", "skip_after"]).unwrap_or_default();
 
         if optional && skip_after > 0 {
-            bail!("skip_after can't be used with optional fields" => input);
+            return err("skip_after can't be used with optional fields", input);
         }
         let quoted = contains_attribute(&input.attrs, &["event", "quoted"]);
 
         Ok(EventParam {
+            span: input.span(),
             field_name,
             param_name,
             optional,
             skip_after,
             quoted,
         })
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn parser(&self) -> TokenStream {
+        let field_parser = if self.quoted {
+            quote_spanned!(self.span() => quoted(parse_field))
+        } else {
+            quote_spanned!(self.span() => parse_field)
+        };
+
+        if let Some(param_name) = &self.param_name {
+            quote_spanned!(self.span() => param_parse_with(#param_name, #field_parser))
+        } else {
+            quote_spanned!(self.span() => #field_parser)
+        }
+    }
+
+    fn skip_after(&self) -> TokenStream {
+        let skip_after = self.skip_after as usize;
+        if skip_after > 0 {
+            quote_spanned!(self.span() => let input = &input.get(#skip_after..).ok_or(nom::Err::Incomplete(nom::Needed::Unknown))?;)
+        } else {
+            quote!()
+        }
     }
 }
