@@ -326,8 +326,15 @@ impl Serialize for SteamId3 {
 }
 
 pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
+    debug_assert!(delim < 128); // only basic ascii
     let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
-    Ok((&input[..end], &input[(end + offset)..]))
+    // safety, memchr returns indices that are inside the input length and we only split on ascii
+    Ok(unsafe {
+        (
+            input.get_unchecked(..end),
+            input.get_unchecked(end + offset..),
+        )
+    })
 }
 
 pub fn skip(input: &str, count: usize) -> Result<&str> {
@@ -336,16 +343,19 @@ pub fn skip(input: &str, count: usize) -> Result<&str> {
 
 pub fn skip_matches(input: &str, char: u8) -> (&str, bool) {
     if input.as_bytes().get(0) == Some(&char) {
-        (&input[1..], true)
+        // safety, we verified that the input has a length of at least 1
+        (unsafe { input.get_unchecked(1..) }, true)
     } else {
         (input, false)
     }
 }
 
 pub fn find_between_end(input: &str, start: u8, end: u8) -> Option<&str> {
+    debug_assert!(start < 128 && end < 128); // only basic ascii
     let end = memrchr(end, input.as_bytes())?;
     let start = memrchr(start, &input.as_bytes()[0..end])?;
-    Some(&input[(start + 1)..end])
+    // safety, memchr returns indices that are inside the input length and we only split on ascii
+    Some(unsafe { input.get_unchecked((start + 1)..end) })
 }
 
 #[test]
