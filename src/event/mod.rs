@@ -2,13 +2,14 @@ mod game;
 mod medic;
 mod player;
 
+use crate::common::{skip, skip_matches, split_once};
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
 use crate::raw_event::{against_subject_parser, RawSubject};
-use crate::{IResult, RawEvent, RawEventType, SubjectId};
+use crate::{err_incomplete, IResult, RawEvent, RawEventType, SubjectId};
 pub use game::*;
 pub use medic::*;
 use nom::bytes::complete::{tag, take_while};
-use nom::character::complete::{alpha1, digit1};
+use nom::character::complete::digit1;
 use nom::combinator::opt;
 use nom::error::{ErrorKind, ParseError};
 use nom::number::complete::float;
@@ -37,7 +38,7 @@ trait GameEventErrTrait<T> {
 impl<'a, T> GameEventErrTrait<T> for IResult<'a, T> {
     fn with_type(self, ty: RawEventType) -> Result<T, GameEventError> {
         self.map_err(|err| match err {
-            nom::Err::Error(e) | nom::Err::Failure(e) => GameEventError::Error {
+            Err::Error(e) | Err::Failure(e) => GameEventError::Error {
                 err: nom::error::Error {
                     input: e.input.to_string(),
                     code: e.code,
@@ -238,16 +239,13 @@ impl<'a> Iterator for ParamIter<'a> {
 }
 
 fn param_pair_parse(input: &str) -> IResult<'_, (&str, &str)> {
-    let (input, open_tag) = opt(tag("("))(input)?;
+    let (input, open_tag) = skip_matches(input, b'(');
 
-    let (input, key) = alpha1(input)?;
-    let (input, _) = tag(r#" ""#)(input)?;
-    let (input, value) = take_while(|c| c != '"')(input)?;
-    let (input, _) = tag(r#"""#)(input)?;
+    let (key, input) = split_once(input, b' ', 0)?;
+    let input = skip(input, 2)?;
+    let (value, input) = split_once(input, b'"', 1)?;
 
-    if open_tag.is_some() {
-        let (_input, _) = tag(")")(input)?;
-    }
+    let input = if open_tag { skip(input, 1)? } else { input };
     Ok((input, (key, value)))
 }
 
@@ -273,14 +271,13 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
     move |input: &str| {
         debug_assert!(input.as_bytes()[0] != b' ');
 
-        let has_open = input.as_bytes()[0] == b'(';
-        let input = &input[has_open as usize..];
+        let (input, has_open) = skip_matches(input, b'(');
 
-        let input = &input[key.len() + 1..]; // skip space + key
+        let input = skip(input, key.len() + 1)?; // skip space + key
 
         let (input, value) = parser(input)?;
 
-        let input = &input[has_open as usize..];
+        let input = skip(input, has_open as usize)?;
 
         debug_assert!(
             input.is_empty() || input.as_bytes()[0] == b' ',
@@ -288,7 +285,7 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
             input
         );
 
-        let input = &input[(!input.is_empty() as usize)..];
+        let input = skip(input, 1).unwrap_or(input);
         Ok((input, value))
     }
 }
@@ -296,7 +293,7 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
 fn parse_from_str<'a, T: FromStr + 'a>(input: &'a str) -> IResult<T> {
     T::from_str(input)
         .map(|res| ("", res))
-        .map_err(|_| nom::Err::Error(nom::error::Error::from_error_kind(input, ErrorKind::IsNot)))
+        .map_err(|_| Err::Error(nom::error::Error::from_error_kind(input, ErrorKind::IsNot)))
 }
 
 fn int(input: &str) -> IResult<i32> {
@@ -304,7 +301,7 @@ fn int(input: &str) -> IResult<i32> {
     let (input, raw) = digit1(input)?;
     let val: i32 = raw
         .parse()
-        .map_err(|_| nom::Err::Error(nom::error::Error::new(raw, ErrorKind::Digit)))?;
+        .map_err(|_| Err::Error(nom::error::Error::new(raw, ErrorKind::Digit)))?;
     Ok((input, if sign.is_some() { -val } else { val }))
 }
 
@@ -312,9 +309,7 @@ fn u_int(input: &str) -> IResult<u32> {
     let (input, quote) = opt(tag("\""))(input)?;
 
     let (input, raw) = digit1(input)?;
-    let val = raw
-        .parse()
-        .map_err(|_| nom::Err::Error(nom::error::Error::new(raw, ErrorKind::Digit)))?;
+    let val = raw.parse().map_err(|_| err_incomplete())?;
 
     let input = if quote.is_some() {
         tag("\"")(input)?.0
@@ -334,11 +329,11 @@ pub fn position(input: &str) -> IResult<(i32, i32, i32)> {
 }
 
 pub trait EventField<'a>: Sized + 'a {
-    fn parse_field(input: &'a str) -> crate::IResult<Self>;
+    fn parse_field(input: &'a str) -> IResult<Self>;
 }
 
 impl<'a> EventField<'a> for &'a str {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         if input.starts_with('"') {
             quoted(take_while(|c| c != '"'))(input)
         } else {
@@ -348,31 +343,31 @@ impl<'a> EventField<'a> for &'a str {
 }
 
 impl<'a> EventField<'a> for i32 {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         int(input)
     }
 }
 
 impl<'a> EventField<'a> for u32 {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         u_int(input)
     }
 }
 
 impl<'a> EventField<'a> for f32 {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         float(input)
     }
 }
 
 impl<'a> EventField<'a> for u8 {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         u_int(input).map(|(rest, num)| (rest, num as u8))
     }
 }
 
 impl<'a, T: EventField<'a>> EventField<'a> for Option<T> {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         T::parse_field(input).map(|(rest, int)| (rest, Some(int)))
     }
 }
@@ -380,7 +375,7 @@ impl<'a, T: EventField<'a>> EventField<'a> for Option<T> {
 pub trait EventFieldFromStr: FromStr {}
 
 impl<'a, T: EventFieldFromStr + 'a> EventField<'a> for T {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         parse_from_str(input)
     }
 }
@@ -388,7 +383,7 @@ impl<'a, T: EventFieldFromStr + 'a> EventField<'a> for T {
 impl EventFieldFromStr for SocketAddr {}
 
 impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         let (input, x) = T::parse_field(input)?;
         let (input, _) = tag(" ")(input)?;
         let (input, y) = T::parse_field(input)?;
@@ -399,17 +394,17 @@ impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
 }
 
 impl<'a> EventField<'a> for Option<NonZeroU32> {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         u32::parse_field(input).map(|(rest, int)| (rest, NonZeroU32::new(int)))
     }
 }
 
 impl<'a> EventField<'a> for RawSubject<'a> {
-    fn parse_field(input: &'a str) -> crate::IResult<Self> {
+    fn parse_field(input: &'a str) -> IResult<Self> {
         against_subject_parser(input)
     }
 }
 
-pub fn parse_field<'a, T: EventField<'a>>(input: &'a str) -> crate::IResult<T> {
+pub fn parse_field<'a, T: EventField<'a>>(input: &'a str) -> IResult<T> {
     T::parse_field(input)
 }

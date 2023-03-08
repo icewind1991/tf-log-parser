@@ -8,6 +8,7 @@ pub use crate::subjectmap::SubjectMap;
 use chrono::NaiveDateTime;
 pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
+use nom::error::ErrorKind;
 use nom::Err;
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
@@ -22,6 +23,10 @@ pub mod event;
 pub mod module;
 pub mod raw_event;
 mod subjectmap;
+
+pub(crate) fn err_incomplete() -> Err<nom::error::Error<&'static str>> {
+    Err::Error(nom::error::Error::new("", ErrorKind::Digit))
+}
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -40,6 +45,15 @@ impl From<nom::Err<nom::error::Error<&'_ str>>> for Error {
             Err::Incomplete(_) => Error::Incomplete,
             Err::Error(_) => Error::Malformed,
             Err::Failure(_) => Error::Malformed,
+        }
+    }
+}
+
+impl From<Error> for nom::Err<nom::error::Error<&'static str>> {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::Incomplete => err_incomplete(),
+            _ => Err::Error(nom::error::Error::new("", ErrorKind::Verify)),
         }
     }
 }

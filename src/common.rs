@@ -330,6 +330,18 @@ pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)>
     Ok((&input[..end], &input[(end + offset)..]))
 }
 
+pub fn skip(input: &str, count: usize) -> Result<&str> {
+    input.get(count..).ok_or(Error::Incomplete)
+}
+
+pub fn skip_matches(input: &str, char: u8) -> (&str, bool) {
+    if input.as_bytes().get(0) == Some(&char) {
+        (&input[1..], true)
+    } else {
+        (input, false)
+    }
+}
+
 pub fn find_between_end(input: &str, start: u8, end: u8) -> Option<&str> {
     let end = memrchr(end, input.as_bytes())?;
     let start = memrchr(start, &input.as_bytes()[0..end])?;
