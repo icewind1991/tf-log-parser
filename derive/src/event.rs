@@ -227,7 +227,7 @@ impl EventParam {
     fn skip_after(&self) -> TokenStream {
         let skip_after = self.skip_after as usize;
         if skip_after > 0 {
-            quote_spanned!(self.span() => let input = &input.get(#skip_after..).ok_or(nom::Err::Incomplete(nom::Needed::Unknown))?;)
+            quote_spanned!(self.span() => let input = &input.get(#skip_after..).ok_or(Error::Incomplete)?;)
         } else {
             quote!()
         }

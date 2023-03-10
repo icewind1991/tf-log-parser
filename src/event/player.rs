@@ -1,7 +1,7 @@
 use crate::common::{Class, Team};
 use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
-use crate::{Event, IResult};
+use crate::{Error, Event, IResult};
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
 

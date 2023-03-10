@@ -5,25 +5,18 @@ mod player;
 use crate::common::{skip, skip_matches, split_once, take_until};
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
 use crate::raw_event::{against_subject_parser, RawSubject};
-use crate::{err_incomplete, IResult, RawEvent, RawEventType, SubjectId};
+use crate::{Error, IResult, RawEvent, RawEventType, SubjectId};
 pub use game::*;
 pub use medic::*;
-use nom::error::{ErrorKind, ParseError};
-use nom::number::complete::float;
-use nom::Err;
 pub use player::*;
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::str::FromStr;
-use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum GameEventError {
     #[error("malformed game event({ty:?}): {err}")]
-    Error {
-        err: nom::error::Error<String>,
-        ty: RawEventType,
-    },
+    Error { err: Box<Error>, ty: RawEventType },
     #[error("incomplete event body({0:?})")]
     Incomplete(RawEventType),
 }
@@ -34,16 +27,9 @@ trait GameEventErrTrait<T> {
 
 impl<'a, T> GameEventErrTrait<T> for IResult<'a, T> {
     fn with_type(self, ty: RawEventType) -> Result<T, GameEventError> {
-        self.map_err(|err| match err {
-            Err::Error(e) | Err::Failure(e) => GameEventError::Error {
-                err: nom::error::Error {
-                    input: e.input.to_string(),
-                    code: e.code,
-                },
-                ty,
-            },
-
-            Err::Incomplete(_) => GameEventError::Incomplete(ty),
+        self.map_err(|err| GameEventError::Error {
+            err: Box::new(err),
+            ty,
         })
         .map(|(_rest, t)| t)
     }
@@ -290,7 +276,7 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
 fn parse_from_str<'a, T: FromStr + 'a>(input: &'a str) -> IResult<T> {
     T::from_str(input)
         .map(|res| ("", res))
-        .map_err(|_| Err::Error(nom::error::Error::from_error_kind(input, ErrorKind::IsNot)))
+        .map_err(|_| Error::Malformed)
 }
 
 fn int(input: &str) -> IResult<i32> {
@@ -302,7 +288,7 @@ fn int(input: &str) -> IResult<i32> {
 
 fn u_int(input: &str) -> IResult<u32> {
     let (input, raw) = take_until(input, b' ');
-    let val = raw.parse().map_err(|_| err_incomplete())?;
+    let val = raw.parse().map_err(|_| Error::Incomplete)?;
 
     Ok((input, val))
 }
@@ -337,7 +323,8 @@ impl<'a> EventField<'a> for u32 {
 
 impl<'a> EventField<'a> for f32 {
     fn parse_field(input: &'a str) -> IResult<Self> {
-        float(input)
+        let (input, raw) = take_until(input, b' ');
+        Ok((input, raw.parse().map_err(|_| Error::Malformed)?))
     }
 }
 

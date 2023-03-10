@@ -1,9 +1,8 @@
 use crate::common::{split_once, Team};
-use crate::{Error, Result};
+use crate::{Error, IResult, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
-use nom::{IResult, Needed};
 use std::convert::{TryFrom, TryInto};
 use std::num::ParseIntError;
 
@@ -110,8 +109,8 @@ fn test_split_player_subject() {
     )
 }
 
-pub fn against_subject_parser(input: &str) -> IResult<&str, RawSubject> {
-    subject_parser(input).map_err(|_| nom::Err::Incomplete(Needed::Unknown))
+pub fn against_subject_parser(input: &str) -> IResult<RawSubject> {
+    subject_parser(input).map_err(|_| Error::Incomplete)
 }
 
 pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {

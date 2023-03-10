@@ -9,7 +9,6 @@ repository = "https://github.com/icewind1991/tf-log-parser"
 
 [dependencies]
 steamid-ng = "1"
-nom = "7"
 enum-iterator = "1.4"
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "1"
