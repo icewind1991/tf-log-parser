@@ -14,6 +14,7 @@ pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
+use std::num::ParseIntError;
 pub use tf_log_parser_derive::Event;
 use thiserror::Error;
 
@@ -60,6 +61,12 @@ impl From<Error> for nom::Err<nom::error::Error<&'static str>> {
 
 impl From<nom::error::Error<&'_ str>> for Error {
     fn from(_: nom::error::Error<&str>) -> Self {
+        Error::Malformed
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(_: ParseIntError) -> Self {
         Error::Malformed
     }
 }

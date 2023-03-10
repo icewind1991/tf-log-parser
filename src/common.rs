@@ -337,6 +337,16 @@ pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)>
     })
 }
 
+pub fn take_until(input: &str, delim: u8) -> (&str, &str) {
+    debug_assert!(delim < 128); // only basic ascii
+    if let Some(end) = memchr(delim, input.as_bytes()) {
+        // safety, memchr returns indices that are inside the input length and we only split on ascii
+        unsafe { (input.get_unchecked(end..), input.get_unchecked(..end)) }
+    } else {
+        ("", input)
+    }
+}
+
 pub fn skip(input: &str, count: usize) -> Result<&str> {
     input.get(count..).ok_or(Error::Incomplete)
 }

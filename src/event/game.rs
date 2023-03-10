@@ -1,9 +1,8 @@
-use crate::event::{param_parse, param_parse_with, parse_field, ParamIter};
+use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
-use crate::{Event, IResult};
+use crate::{Error, Event, IResult};
 
-use nom::bytes::complete::{tag, take_while};
-use nom::combinator::opt;
+use crate::common::{skip, take_until};
 
 #[derive(Debug, Event)]
 pub struct RoundWinEvent<'a> {
@@ -32,10 +31,10 @@ pub struct TournamentModeStartedEvent<'a> {
 
 impl<'a> Event<'a> for TournamentModeStartedEvent<'a> {
     fn parse(input: &'a str) -> IResult<Self> {
-        let (input, _) = tag("\nBlue Team: ")(input)?;
-        let (input, blue) = take_while(|c| c != '\n')(input)?;
-        let (input, _) = tag("\nRed Team: ")(input)?;
-        let (input, red) = take_while(|c| c != '\n')(input)?;
+        let input = skip(input, "\nBlue Team: ".len())?;
+        let (input, blue) = take_until(input, b'\n');
+        let input = skip(input, "\nRed Team: ".len())?;
+        let (input, red) = take_until(input, b'\n');
         Ok((input, TournamentModeStartedEvent { blue, red }))
     }
 }
@@ -58,20 +57,41 @@ pub struct PointCapturedEvent<'a> {
 
 impl<'a> Event<'a> for PointCapturedEvent<'a> {
     fn parse(input: &'a str) -> IResult<Self> {
-        let (input, cp) = opt(param_parse("cp"))(input)?;
-        let (input, cp_name) = opt(param_parse("cpname"))(input)?;
-        let (input, num_cappers) = opt(param_parse("numcappers"))(input)?;
-
+        let mut cp = Default::default();
+        let mut cp_name = Default::default();
+        let mut num_cappers = Default::default();
         let mut players = Vec::new();
 
-        let mut params = ParamIter::new(input);
-        match (params.next(), params.next()) {
-            (Some((subject_key, subject)), Some((position_key, position_str)))
-                if subject_key.starts_with("player") && position_key.starts_with("position") =>
-            {
-                players.push((parse_field(subject)?.1, parse_field(position_str)?.1));
+        let mut params = ParamIter::new(input).peekable();
+        while let Some((name, value)) = params.peek() {
+            match *name {
+                "cp" => {
+                    cp = Some(value.parse().map_err(Error::from)?);
+                    let _ = params.next();
+                }
+                "cpname" => {
+                    cp_name = Some(*value);
+                    let _ = params.next();
+                }
+                "numcappers" => {
+                    num_cappers = Some(value.parse().map_err(Error::from)?);
+                    let _ = params.next();
+                }
+                _ => {
+                    break;
+                }
             }
-            _ => {}
+        }
+        loop {
+            match (params.next(), params.next()) {
+                (Some((subject_key, subject)), Some((position_key, position_str)))
+                    if subject_key.starts_with("player")
+                        && position_key.starts_with("position") =>
+                {
+                    players.push((parse_field(subject)?.1, parse_field(position_str)?.1));
+                }
+                _ => break,
+            }
         }
 
         Ok((

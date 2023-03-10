@@ -2,15 +2,12 @@ mod game;
 mod medic;
 mod player;
 
-use crate::common::{skip, skip_matches, split_once};
+use crate::common::{skip, skip_matches, split_once, take_until};
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
 use crate::raw_event::{against_subject_parser, RawSubject};
 use crate::{err_incomplete, IResult, RawEvent, RawEventType, SubjectId};
 pub use game::*;
 pub use medic::*;
-use nom::bytes::complete::{tag, take_while};
-use nom::character::complete::digit1;
-use nom::combinator::opt;
 use nom::error::{ErrorKind, ParseError};
 use nom::number::complete::float;
 use nom::Err;
@@ -253,9 +250,9 @@ fn quoted<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
     parser: P,
 ) -> impl Fn(&'a str) -> IResult<'a, T> {
     move |input| {
-        let (input, _) = tag(r#"""#)(input)?;
-        let (input, res) = parser(input)?;
-        let (input, _) = tag(r#"""#)(input)?;
+        let input = skip(input, 1)?;
+        let (inner, input) = split_once(input, b'"', 1)?;
+        let (_, res) = parser(inner)?;
         Ok((input, res))
     }
 }
@@ -297,35 +294,17 @@ fn parse_from_str<'a, T: FromStr + 'a>(input: &'a str) -> IResult<T> {
 }
 
 fn int(input: &str) -> IResult<i32> {
-    let (input, sign) = opt(tag("-"))(input)?;
-    let (input, raw) = digit1(input)?;
-    let val: i32 = raw
-        .parse()
-        .map_err(|_| Err::Error(nom::error::Error::new(raw, ErrorKind::Digit)))?;
-    Ok((input, if sign.is_some() { -val } else { val }))
+    let (input, sign) = skip_matches(input, b'-');
+    let (input, unsigned) = u_int(input)?;
+    let signed = unsigned as i32;
+    Ok((input, if sign { -signed } else { signed }))
 }
 
 fn u_int(input: &str) -> IResult<u32> {
-    let (input, quote) = opt(tag("\""))(input)?;
-
-    let (input, raw) = digit1(input)?;
+    let (input, raw) = take_until(input, b' ');
     let val = raw.parse().map_err(|_| err_incomplete())?;
 
-    let input = if quote.is_some() {
-        tag("\"")(input)?.0
-    } else {
-        input
-    };
     Ok((input, val))
-}
-
-pub fn position(input: &str) -> IResult<(i32, i32, i32)> {
-    let (input, x) = int(input)?;
-    let (input, _) = tag(" ")(input)?;
-    let (input, y) = int(input)?;
-    let (input, _) = tag(" ")(input)?;
-    let (input, z) = int(input)?;
-    Ok((input, (x, y, z)))
 }
 
 pub trait EventField<'a>: Sized + 'a {
@@ -334,8 +313,10 @@ pub trait EventField<'a>: Sized + 'a {
 
 impl<'a> EventField<'a> for &'a str {
     fn parse_field(input: &'a str) -> IResult<Self> {
-        if input.starts_with('"') {
-            quoted(take_while(|c| c != '"'))(input)
+        let (input, quoted) = skip_matches(input, b'"');
+        if quoted {
+            let (value, input) = split_once(input, b'"', 1)?;
+            Ok((input, value))
         } else {
             Ok(("", input))
         }
@@ -384,11 +365,11 @@ impl EventFieldFromStr for SocketAddr {}
 
 impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
     fn parse_field(input: &'a str) -> IResult<Self> {
-        let (input, x) = T::parse_field(input)?;
-        let (input, _) = tag(" ")(input)?;
-        let (input, y) = T::parse_field(input)?;
-        let (input, _) = tag(" ")(input)?;
-        let (input, z) = T::parse_field(input)?;
+        let (input, x) = parse_field(input)?;
+        let input = skip(input, 1)?;
+        let (input, y) = parse_field(input)?;
+        let input = skip(input, 1)?;
+        let (input, z) = parse_field(input)?;
         Ok((input, (x, y, z)))
     }
 }
