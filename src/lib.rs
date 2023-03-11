@@ -10,7 +10,6 @@ pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
-use std::convert::TryInto;
 use std::fmt::Debug;
 use std::num::ParseIntError;
 pub use tf_log_parser_derive::Event;
@@ -78,22 +77,9 @@ pub fn parse_with_handler<Handler: EventHandler>(
         let raw_event = event_res?;
         let should_handle = Handler::does_handle(raw_event.ty);
         if should_handle || start_time.is_none() {
-            let event_time: NaiveDateTime = raw_event.date.try_into().unwrap();
-            let match_time = match start_time {
-                Some(start_time) => (event_time - start_time).num_seconds() as u32,
-                None => {
-                    start_time = Some(event_time);
-                    0
-                }
-            };
             if should_handle {
                 let event = GameEvent::parse(&raw_event)?;
-                let (subject, data) = subjects.insert(&raw_event.subject)?;
-                let meta = EventMeta {
-                    time: match_time,
-                    subject,
-                };
-                handler.handle(&meta, subject, data, &event);
+                handler.process(&raw_event, &event, &mut start_time, &mut subjects)?;
             }
         }
     }

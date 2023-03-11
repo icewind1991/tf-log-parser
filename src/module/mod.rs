@@ -1,8 +1,9 @@
 use crate::common::SubjectId;
 use crate::event::{EventMeta, GameEvent};
 use crate::raw_event::RawEventType;
-use crate::{SubjectData, SubjectMap};
+use crate::{Error, RawEvent, SubjectData, SubjectMap};
 pub use chat::{ChatMessage, ChatMessages, ChatType};
+use chrono::NaiveDateTime;
 pub use classstats::{ClassStats, ClassStatsHandler};
 pub use healspread::HealSpread;
 pub use lobbysettings::{
@@ -10,6 +11,7 @@ pub use lobbysettings::{
 };
 pub use medicstats::{MedicStats, MedicStatsBuilder};
 use serde::Serialize;
+use std::convert::TryInto;
 use std::marker::PhantomData;
 
 mod chat;
@@ -24,6 +26,30 @@ pub trait EventHandler: Default {
     type PerSubjectOutput;
 
     fn does_handle(ty: RawEventType) -> bool;
+
+    fn process(
+        &mut self,
+        raw_event: &RawEvent,
+        event: &GameEvent,
+        start_time: &mut Option<NaiveDateTime>,
+        subjects: &mut SubjectMap<Self::PerSubjectData>,
+    ) -> Result<(), Error> {
+        let event_time: NaiveDateTime = raw_event.date.try_into().unwrap();
+        let match_time = match start_time {
+            Some(start_time) => (event_time - *start_time).num_seconds() as u32,
+            None => {
+                *start_time = Some(event_time);
+                0
+            }
+        };
+        let (subject, data) = subjects.insert(&raw_event.subject)?;
+        let meta = EventMeta {
+            time: match_time,
+            subject,
+        };
+        self.handle(&meta, subject, data, &event);
+        Ok(())
+    }
 
     fn handle(
         &mut self,

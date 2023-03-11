@@ -16,20 +16,25 @@ use std::str::FromStr;
 #[derive(thiserror::Error, Debug)]
 pub enum GameEventError {
     #[error("malformed game event({ty:?}): {err}")]
-    Error { err: Box<Error>, ty: RawEventType },
+    Error {
+        err: Box<Error>,
+        ty: RawEventType,
+        params: String,
+    },
     #[error("incomplete event body({0:?})")]
     Incomplete(RawEventType),
 }
 
 trait GameEventErrTrait<T> {
-    fn with_type(self, ty: RawEventType) -> Result<T, GameEventError>;
+    fn with_raw(self, raw: &RawEvent) -> Result<T, GameEventError>;
 }
 
 impl<'a, T> GameEventErrTrait<T> for IResult<'a, T> {
-    fn with_type(self, ty: RawEventType) -> Result<T, GameEventError> {
+    fn with_raw(self, raw: &RawEvent) -> Result<T, GameEventError> {
         self.map_err(|err| GameEventError::Error {
             err: Box::new(err),
-            ty,
+            ty: raw.ty,
+            params: raw.params.to_string(),
         })
         .map(|(_rest, t)| t)
     }
@@ -99,100 +104,90 @@ pub enum GameEvent<'a> {
 impl<'a> GameEvent<'a> {
     pub fn parse(raw: &RawEvent<'a>) -> Result<GameEvent<'a>, GameEventError> {
         Ok(match raw.ty {
-            RawEventType::ShotFired => {
-                GameEvent::ShotFired(parse_event(raw.params).with_type(raw.ty)?)
-            }
-            RawEventType::ShotHit => GameEvent::ShotHit(parse_event(raw.params).with_type(raw.ty)?),
-            RawEventType::Damage => GameEvent::Damage(parse_event(raw.params).with_type(raw.ty)?),
-            RawEventType::Killed => GameEvent::Kill(parse_event(raw.params).with_type(raw.ty)?),
+            RawEventType::ShotFired => GameEvent::ShotFired(parse_event(raw.params).with_raw(raw)?),
+            RawEventType::ShotHit => GameEvent::ShotHit(parse_event(raw.params).with_raw(raw)?),
+            RawEventType::Damage => GameEvent::Damage(parse_event(raw.params).with_raw(raw)?),
+            RawEventType::Killed => GameEvent::Kill(parse_event(raw.params).with_raw(raw)?),
             RawEventType::KillAssist => {
-                GameEvent::KillAssist(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::KillAssist(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::SayTeam => GameEvent::SayTeam(raw.params.trim_matches('"')),
             RawEventType::Say => GameEvent::Say(raw.params.trim_matches('"')),
-            RawEventType::Healed => GameEvent::Healed(parse_event(raw.params).with_type(raw.ty)?),
+            RawEventType::Healed => GameEvent::Healed(parse_event(raw.params).with_raw(raw)?),
             RawEventType::ChargeDeployed => {
-                GameEvent::ChargeDeployed(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::ChargeDeployed(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::ChargeEnd => {
-                GameEvent::ChargeEnded(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::ChargeEnded(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::UberAdvantageLost => {
-                GameEvent::AdvantageLost(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::AdvantageLost(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::FirstHealAfterSpawn => {
-                GameEvent::FirstHeal(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::FirstHeal(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::ChargeReady => GameEvent::ChargeReady,
             RawEventType::MedicDeath => {
-                GameEvent::MedicDeath(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::MedicDeath(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::MedicDeathEx => {
-                GameEvent::MedicDeathEx(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::MedicDeathEx(parse_event(raw.params).with_raw(raw)?)
             }
-            RawEventType::Spawned => GameEvent::Spawned(parse_event(raw.params).with_type(raw.ty)?),
+            RawEventType::Spawned => GameEvent::Spawned(parse_event(raw.params).with_raw(raw)?),
             RawEventType::ChangedRole => {
-                GameEvent::RoleChange(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::RoleChange(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::RoundStart => GameEvent::RoundStart,
             RawEventType::RoundLength => {
-                GameEvent::RoundLength(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::RoundLength(parse_event(raw.params).with_raw(raw)?)
             }
-            RawEventType::RoundWin => {
-                GameEvent::RoundWin(parse_event(raw.params).with_type(raw.ty)?)
-            }
+            RawEventType::RoundWin => GameEvent::RoundWin(parse_event(raw.params).with_raw(raw)?),
             RawEventType::RoundOvertime => GameEvent::RoundOverTime,
             RawEventType::LogFileStarted => {
-                GameEvent::LogFileStarted(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::LogFileStarted(parse_event(raw.params).with_raw(raw)?)
             }
-            RawEventType::Connected => {
-                GameEvent::Connected(parse_event(raw.params).with_type(raw.ty)?)
-            }
+            RawEventType::Connected => GameEvent::Connected(parse_event(raw.params).with_raw(raw)?),
             RawEventType::Disconnected => {
-                GameEvent::Disconnect(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::Disconnect(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::SteamIdValidated => GameEvent::SteamIdValidated,
             RawEventType::Entered => GameEvent::Entered,
-            RawEventType::Joined => GameEvent::Joined(parse_event(raw.params).with_type(raw.ty)?),
-            RawEventType::Suicide => GameEvent::Suicide(parse_event(raw.params).with_type(raw.ty)?),
-            RawEventType::PickedUp => {
-                GameEvent::PickedUp(parse_event(raw.params).with_type(raw.ty)?)
-            }
+            RawEventType::Joined => GameEvent::Joined(parse_event(raw.params).with_raw(raw)?),
+            RawEventType::Suicide => GameEvent::Suicide(parse_event(raw.params).with_raw(raw)?),
+            RawEventType::PickedUp => GameEvent::PickedUp(parse_event(raw.params).with_raw(raw)?),
             RawEventType::Domination => {
-                GameEvent::Domination(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::Domination(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::EmptyUber => GameEvent::EmptyUber,
-            RawEventType::Revenge => GameEvent::Revenge(parse_event(raw.params).with_type(raw.ty)?),
+            RawEventType::Revenge => GameEvent::Revenge(parse_event(raw.params).with_raw(raw)?),
             RawEventType::TournamentStart => {
-                GameEvent::TournamentModeStarted(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::TournamentModeStarted(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::CaptureBlocked => {
-                GameEvent::CaptureBlocked(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::CaptureBlocked(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::PointCaptured => {
-                GameEvent::PointCaptured(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::PointCaptured(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::CurrentScore => {
-                GameEvent::CurrentScore(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::CurrentScore(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::PlayerBuiltObject => {
-                GameEvent::BuiltObject(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::BuiltObject(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::PlayerKilledObject => {
-                GameEvent::KilledObject(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::KilledObject(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::PlayerExtinguished => {
-                GameEvent::Extinguished(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::Extinguished(parse_event(raw.params).with_raw(raw)?)
             }
-            RawEventType::GameOver => {
-                GameEvent::GameOver(parse_event(raw.params).with_type(raw.ty)?)
-            }
+            RawEventType::GameOver => GameEvent::GameOver(parse_event(raw.params).with_raw(raw)?),
             RawEventType::FinalScore => {
-                GameEvent::FinalScore(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::FinalScore(parse_event(raw.params).with_raw(raw)?)
             }
             RawEventType::LogFileClosed => GameEvent::LogFileClosed,
             RawEventType::ObjectDetonated => {
-                GameEvent::ObjectDetonated(parse_event(raw.params).with_type(raw.ty)?)
+                GameEvent::ObjectDetonated(parse_event(raw.params).with_raw(raw)?)
             }
             _ => {
                 todo!("{:?} not parsed yet", raw.ty);
@@ -224,8 +219,7 @@ impl<'a> Iterator for ParamIter<'a> {
 fn param_pair_parse(input: &str) -> IResult<'_, (&str, &str)> {
     let (input, open_tag) = skip_matches(input, b'(');
 
-    let (key, input) = split_once(input, b' ', 0)?;
-    let input = skip(input, 2)?;
+    let (key, input) = split_once(input, b' ', 2)?;
     let (value, input) = split_once(input, b'"', 1)?;
 
     let input = if open_tag { skip(input, 1)? } else { input };
@@ -252,21 +246,15 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
     parser: P,
 ) -> impl Fn(&'a str) -> IResult<'a, T> {
     move |input: &str| {
-        debug_assert!(input.as_bytes()[0] != b' ');
-
         let (input, has_open) = skip_matches(input, b'(');
 
-        let input = skip(input, key.len() + 1)?; // skip space + key
+        let input = skip(input, key.len() + 2)?; // skip space + key + quote
 
-        let (input, value) = parser(input)?;
+        let (value, input) = split_once(input, b'"', 1)?;
+
+        let (_, value) = parser(value)?;
 
         let input = skip(input, has_open as usize)?;
-
-        debug_assert!(
-            input.is_empty() || input.as_bytes()[0] == b' ',
-            "\"{}\" starts with space",
-            input
-        );
 
         let input = skip(input, 1).unwrap_or(input);
         Ok((input, value))
@@ -299,13 +287,7 @@ pub trait EventField<'a>: Sized + 'a {
 
 impl<'a> EventField<'a> for &'a str {
     fn parse_field(input: &'a str) -> IResult<Self> {
-        let (input, quoted) = skip_matches(input, b'"');
-        if quoted {
-            let (value, input) = split_once(input, b'"', 1)?;
-            Ok((input, value))
-        } else {
-            Ok(("", input))
-        }
+        Ok(("", input))
     }
 }
 
@@ -369,7 +351,7 @@ impl<'a> EventField<'a> for Option<NonZeroU32> {
 
 impl<'a> EventField<'a> for RawSubject<'a> {
     fn parse_field(input: &'a str) -> IResult<Self> {
-        against_subject_parser(input)
+        Ok(("", against_subject_parser(input)?))
     }
 }
 

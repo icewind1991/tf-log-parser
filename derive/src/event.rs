@@ -53,14 +53,8 @@ impl Derivable for Event {
                         return err("optional fields can't be unnamed", &param.field_name);
                     };
 
-                    let parser = if param.quoted {
-                        quote_spanned!(field_name.span() => quoted(parse_field))
-                    } else {
-                        quote_spanned!(field_name.span() => parse_field)
-                    };
-
                     Ok(quote_spanned!(
-                        field_name.span() => #param_name => event.#field_name = #parser(value)?.1
+                        field_name.span() => #param_name => event.#field_name = parse_field(value)?.1
                     ))
                 })
                 .collect::<Result<Vec<_>>>()?;
@@ -194,7 +188,8 @@ impl EventParam {
         if optional && skip_after > 0 {
             return err("skip_after can't be used with optional fields", input);
         }
-        let quoted = contains_attribute(&input.attrs, &["event", "quoted"]);
+        let quoted =
+            get_attribute_value(&input.attrs, &["event", "quoted"]).unwrap_or(param_name.is_none());
 
         Ok(EventParam {
             span: input.span(),
@@ -210,13 +205,16 @@ impl EventParam {
         self.span
     }
 
-    fn parser(&self) -> TokenStream {
-        let field_parser = if self.quoted {
+    fn field_parser(&self) -> TokenStream {
+        if self.quoted {
             quote_spanned!(self.span() => quoted(parse_field))
         } else {
             quote_spanned!(self.span() => parse_field)
-        };
+        }
+    }
 
+    fn parser(&self) -> TokenStream {
+        let field_parser = self.field_parser();
         if let Some(param_name) = &self.param_name {
             quote_spanned!(self.span() => param_parse_with(#param_name, #field_parser))
         } else {

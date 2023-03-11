@@ -108,7 +108,6 @@ impl<'a> Event<'a> for PointCapturedEvent<'a> {
 
 #[derive(Debug, Event)]
 pub struct CurrentScoreEvent {
-    #[event(unnamed)]
     pub score: u8,
     #[event(name = "with")]
     pub players: u8,
@@ -121,7 +120,6 @@ pub struct GameOverEvent<'a> {
 
 #[derive(Debug, Event)]
 pub struct FinalScoreEvent {
-    #[event(unnamed)]
     pub score: u8,
     #[event(name = "with")]
     pub players: u8,

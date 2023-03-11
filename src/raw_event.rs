@@ -1,5 +1,5 @@
 use crate::common::{split_once, Team};
-use crate::{Error, IResult, Result};
+use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
@@ -109,8 +109,13 @@ fn test_split_player_subject() {
     )
 }
 
-pub fn against_subject_parser(input: &str) -> IResult<RawSubject> {
-    subject_parser(input).map_err(|_| Error::Incomplete)
+pub fn against_subject_parser(input: &str) -> Result<RawSubject> {
+    // "against" fields are always players, and unquoted
+    if input.ends_with("e>") {
+        Ok(RawSubject::Console)
+    } else {
+        Ok(RawSubject::Player(input))
+    }
 }
 
 pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {

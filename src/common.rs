@@ -362,8 +362,10 @@ pub fn skip_matches(input: &str, char: u8) -> (&str, bool) {
 
 pub fn find_between_end(input: &str, start: u8, end: u8) -> Option<&str> {
     debug_assert!(start < 128 && end < 128); // only basic ascii
-    let end = memrchr(end, input.as_bytes())?;
-    let start = memrchr(start, &input.as_bytes()[0..end])?;
+    let bytes = input.as_bytes();
+    let end = memrchr(end, bytes)?;
+    // safety, memchr returns indices that are inside the input
+    let start = memrchr(start, unsafe { &bytes.get_unchecked(0..end) })?;
     // safety, memchr returns indices that are inside the input length and we only split on ascii
     Some(unsafe { input.get_unchecked((start + 1)..end) })
 }

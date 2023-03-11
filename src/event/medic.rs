@@ -1,4 +1,4 @@
-use crate::event::{param_parse_with, parse_field, quoted, ParamIter};
+use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
 use crate::{Event, IResult};
 
@@ -7,7 +7,6 @@ pub struct HealedEvent<'a> {
     #[event(name = "against")]
     pub target: RawSubject<'a>,
     #[event(name = "healing")]
-    #[event(quoted)]
     pub amount: u32,
 }
 

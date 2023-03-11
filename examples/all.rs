@@ -9,7 +9,7 @@ fn main() -> Result<(), MainError> {
 
     let events: Vec<_> = LineSplit::new(&input)
         .flat_map(RawEvent::parse)
-        .flat_map(|raw| GameEvent::parse(&raw))
+        .map(|raw| GameEvent::parse(&raw).unwrap())
         .collect();
 
     println!("{} events parsed", events.len());

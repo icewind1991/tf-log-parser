@@ -1,5 +1,5 @@
 use crate::common::{Class, Team};
-use crate::event::{param_parse_with, parse_field, ParamIter};
+use crate::event::{param_parse_with, parse_field, quoted, ParamIter};
 use crate::raw_event::RawSubject;
 use crate::{Error, Event, IResult};
 use std::net::SocketAddr;
@@ -38,6 +38,7 @@ pub struct KillEvent<'a> {
 
 #[derive(Debug, Event)]
 pub struct KillAssistEvent<'a> {
+    #[event(name = "against")]
     pub target: RawSubject<'a>,
     pub attacker_position: Option<(i32, i32, i32)>,
     pub victim_position: Option<(i32, i32, i32)>,
@@ -57,7 +58,7 @@ pub struct RoleChangeEvent {
 
 #[derive(Debug, Event)]
 pub struct ConnectedEvent {
-    #[event(name = "to")]
+    #[event(name = "address")]
     pub address: SocketAddr,
 }
 
