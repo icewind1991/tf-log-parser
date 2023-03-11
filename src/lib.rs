@@ -40,7 +40,7 @@ impl From<ParseIntError> for Error {
     }
 }
 
-type Result<O, E = Error> = std::result::Result<O, E>;
+pub type Result<O, E = Error> = std::result::Result<O, E>;
 
 #[doc(hidden)]
 pub type IResult<'a, O, E = Error> = std::result::Result<(&'a str, O), E>;

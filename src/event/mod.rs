@@ -2,10 +2,10 @@ mod game;
 mod medic;
 mod player;
 
-use crate::common::{skip, skip_matches, split_once, take_until};
+use crate::common::{skip, skip_matches, split_once};
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
 use crate::raw_event::{against_subject_parser, RawSubject};
-use crate::{Error, IResult, RawEvent, RawEventType, SubjectId};
+use crate::{Error, IResult, RawEvent, RawEventType, Result, SubjectId};
 pub use game::*;
 pub use medic::*;
 pub use player::*;
@@ -226,13 +226,11 @@ fn param_pair_parse(input: &str) -> IResult<'_, (&str, &str)> {
     Ok((input, (key, value)))
 }
 
-fn quoted<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
-    parser: P,
-) -> impl Fn(&'a str) -> IResult<'a, T> {
+fn quoted<'a, T, P: Fn(&'a str) -> Result<T>>(parser: P) -> impl Fn(&'a str) -> IResult<'a, T> {
     move |input| {
         let input = skip(input, 1)?;
         let (inner, input) = split_once(input, b'"', 1)?;
-        let (_, res) = parser(inner)?;
+        let res = parser(inner)?;
         Ok((input, res))
     }
 }
@@ -241,7 +239,7 @@ pub fn param_parse<'a, T: EventField<'a>>(key: &'a str) -> impl Fn(&'a str) -> I
     param_parse_with(key, T::parse_field)
 }
 
-pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
+pub fn param_parse_with<'a, T, P: Fn(&'a str) -> Result<T>>(
     key: &'a str,
     parser: P,
 ) -> impl Fn(&'a str) -> IResult<'a, T> {
@@ -252,7 +250,7 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
 
         let (value, input) = split_once(input, b'"', 1)?;
 
-        let (_, value) = parser(value)?;
+        let value = parser(value)?;
 
         let input = skip(input, has_open as usize)?;
 
@@ -261,100 +259,63 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> IResult<'a, T>>(
     }
 }
 
-fn parse_from_str<'a, T: FromStr + 'a>(input: &'a str) -> IResult<T> {
-    T::from_str(input)
-        .map(|res| ("", res))
-        .map_err(|_| Error::Malformed)
-}
-
-fn int(input: &str) -> IResult<i32> {
-    let (input, sign) = skip_matches(input, b'-');
-    let (input, unsigned) = u_int(input)?;
-    let signed = unsigned as i32;
-    Ok((input, if sign { -signed } else { signed }))
-}
-
-fn u_int(input: &str) -> IResult<u32> {
-    let (input, raw) = take_until(input, b' ');
-    let val = raw.parse().map_err(|_| Error::Incomplete)?;
-
-    Ok((input, val))
+fn parse_from_str<'a, T: FromStr + 'a>(input: &'a str) -> Result<T> {
+    T::from_str(input).map_err(|_| Error::Malformed)
 }
 
 pub trait EventField<'a>: Sized + 'a {
-    fn parse_field(input: &'a str) -> IResult<Self>;
+    fn parse_field(input: &'a str) -> Result<Self>;
 }
 
 impl<'a> EventField<'a> for &'a str {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        Ok(("", input))
-    }
-}
-
-impl<'a> EventField<'a> for i32 {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        int(input)
-    }
-}
-
-impl<'a> EventField<'a> for u32 {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        u_int(input)
-    }
-}
-
-impl<'a> EventField<'a> for f32 {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        let (input, raw) = take_until(input, b' ');
-        Ok((input, raw.parse().map_err(|_| Error::Malformed)?))
-    }
-}
-
-impl<'a> EventField<'a> for u8 {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        u_int(input).map(|(rest, num)| (rest, num as u8))
+    fn parse_field(input: &'a str) -> Result<Self> {
+        Ok(input)
     }
 }
 
 impl<'a, T: EventField<'a>> EventField<'a> for Option<T> {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        T::parse_field(input).map(|(rest, int)| (rest, Some(int)))
+    fn parse_field(input: &'a str) -> Result<Self> {
+        T::parse_field(input).map(Some)
     }
 }
 
 pub trait EventFieldFromStr: FromStr {}
 
 impl<'a, T: EventFieldFromStr + 'a> EventField<'a> for T {
-    fn parse_field(input: &'a str) -> IResult<Self> {
+    fn parse_field(input: &'a str) -> Result<Self> {
         parse_from_str(input)
     }
 }
 
 impl EventFieldFromStr for SocketAddr {}
+impl EventFieldFromStr for u8 {}
+impl EventFieldFromStr for u32 {}
+impl EventFieldFromStr for i32 {}
+impl EventFieldFromStr for f32 {}
 
 impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        let (input, x) = parse_field(input)?;
-        let input = skip(input, 1)?;
-        let (input, y) = parse_field(input)?;
-        let input = skip(input, 1)?;
-        let (input, z) = parse_field(input)?;
-        Ok((input, (x, y, z)))
+    fn parse_field(input: &'a str) -> Result<Self> {
+        let (x, input) = split_once(input, b' ', 1)?;
+        let x = parse_field(x)?;
+        let (y, input) = split_once(input, b' ', 1)?;
+        let y = parse_field(y)?;
+        let z = parse_field(input)?;
+        Ok((x, y, z))
     }
 }
 
 impl<'a> EventField<'a> for Option<NonZeroU32> {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        u32::parse_field(input).map(|(rest, int)| (rest, NonZeroU32::new(int)))
+    fn parse_field(input: &'a str) -> Result<Self> {
+        u32::parse_field(input).map(|int| NonZeroU32::new(int))
     }
 }
 
 impl<'a> EventField<'a> for RawSubject<'a> {
-    fn parse_field(input: &'a str) -> IResult<Self> {
-        Ok(("", against_subject_parser(input)?))
+    fn parse_field(input: &'a str) -> Result<Self> {
+        against_subject_parser(input)
     }
 }
 
-pub fn parse_field<'a, T: EventField<'a>>(input: &'a str) -> IResult<T> {
+pub fn parse_field<'a, T: EventField<'a>>(input: &'a str) -> Result<T> {
     T::parse_field(input)
 }

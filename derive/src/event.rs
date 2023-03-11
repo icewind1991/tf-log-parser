@@ -54,7 +54,7 @@ impl Derivable for Event {
                     };
 
                     Ok(quote_spanned!(
-                        field_name.span() => #param_name => event.#field_name = parse_field(value)?.1
+                        field_name.span() => #param_name => event.#field_name = parse_field(value)?
                     ))
                 })
                 .collect::<Result<Vec<_>>>()?;

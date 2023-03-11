@@ -88,7 +88,7 @@ impl<'a> Event<'a> for PointCapturedEvent<'a> {
                     if subject_key.starts_with("player")
                         && position_key.starts_with("position") =>
                 {
-                    players.push((parse_field(subject)?.1, parse_field(position_str)?.1));
+                    players.push((parse_field(subject)?, parse_field(position_str)?));
                 }
                 _ => break,
             }
