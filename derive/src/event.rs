@@ -75,14 +75,14 @@ impl Derivable for Event {
 
         Ok(
             quote_spanned!(span => impl #impl_generics Event<#lifetime> for #struct_ident #ty_generics #where_clause {
-                    fn parse(input: & #lifetime str) -> IResult<Self> {
+                    fn parse(input: & #lifetime str) -> Result<Self> {
                         #(#required_fields)*
 
                         #initiator
 
                         #update
 
-                        Ok(("", event))
+                        Ok(event)
                     }
                 }
             ),

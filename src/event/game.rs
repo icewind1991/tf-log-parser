@@ -1,6 +1,6 @@
 use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
-use crate::{Error, Event, IResult};
+use crate::{Error, Event, Result};
 
 use crate::parsing::{skip, take_until};
 
@@ -30,12 +30,12 @@ pub struct TournamentModeStartedEvent<'a> {
 }
 
 impl<'a> Event<'a> for TournamentModeStartedEvent<'a> {
-    fn parse(input: &'a str) -> IResult<Self> {
+    fn parse(input: &'a str) -> Result<Self> {
         let input = skip(input, "\nBlue Team: ".len())?;
         let (input, blue) = take_until(input, b'\n');
         let input = skip(input, "\nRed Team: ".len())?;
-        let (input, red) = take_until(input, b'\n');
-        Ok((input, TournamentModeStartedEvent { blue, red }))
+        let (_, red) = take_until(input, b'\n');
+        Ok(TournamentModeStartedEvent { blue, red })
     }
 }
 
@@ -56,7 +56,7 @@ pub struct PointCapturedEvent<'a> {
 }
 
 impl<'a> Event<'a> for PointCapturedEvent<'a> {
-    fn parse(input: &'a str) -> IResult<Self> {
+    fn parse(input: &'a str) -> Result<Self> {
         let mut cp = Default::default();
         let mut cp_name = Default::default();
         let mut num_cappers = Default::default();
@@ -94,15 +94,12 @@ impl<'a> Event<'a> for PointCapturedEvent<'a> {
             }
         }
 
-        Ok((
-            input,
-            PointCapturedEvent {
-                cp,
-                num_cappers,
-                cp_name,
-                players,
-            },
-        ))
+        Ok(PointCapturedEvent {
+            cp,
+            num_cappers,
+            cp_name,
+            players,
+        })
     }
 }
 

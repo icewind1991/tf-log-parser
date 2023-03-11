@@ -29,22 +29,21 @@ trait GameEventErrTrait<T> {
     fn with_raw(self, raw: &RawEvent) -> Result<T, GameEventError>;
 }
 
-impl<'a, T> GameEventErrTrait<T> for IResult<'a, T> {
+impl<'a, T> GameEventErrTrait<T> for Result<T> {
     fn with_raw(self, raw: &RawEvent) -> Result<T, GameEventError> {
         self.map_err(|err| GameEventError::Error {
             err: Box::new(err),
             ty: raw.ty,
             params: raw.params.to_string(),
         })
-        .map(|(_rest, t)| t)
     }
 }
 
 pub trait Event<'a>: Sized + 'a {
-    fn parse(input: &'a str) -> IResult<Self>;
+    fn parse(input: &'a str) -> Result<Self>;
 }
 
-fn parse_event<'a, T: Event<'a>>(input: &'a str) -> IResult<T> {
+fn parse_event<'a, T: Event<'a>>(input: &'a str) -> Result<T> {
     T::parse(input)
 }
 
@@ -111,8 +110,8 @@ pub struct UnparsedEvent<'a> {
 }
 
 impl<'a> Event<'a> for UnparsedEvent<'a> {
-    fn parse(input: &'a str) -> IResult<Self> {
-        Ok(("", UnparsedEvent { params: input }))
+    fn parse(input: &'a str) -> Result<Self> {
+        Ok(UnparsedEvent { params: input })
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
-use crate::{Event, IResult};
+use crate::{Event, Result};
 
 #[derive(Debug, Event)]
 pub struct HealedEvent<'a> {
