@@ -1,8 +1,8 @@
 use crate::event::EventFieldFromStr;
+use crate::parsing::find_between_end;
 use crate::raw_event::{split_player_subject, RawSubject};
-use crate::{Error, Result};
+use crate::Result;
 use enum_iterator::{all, Sequence};
-use memchr::{memchr, memrchr};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
@@ -323,55 +323,4 @@ impl Serialize for SteamId3 {
     {
         self.0.steam3().serialize(serializer)
     }
-}
-
-pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
-    debug_assert!(delim < 128); // only basic ascii
-    let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
-    // safety, memchr returns indices that are inside the input length and we only split on ascii
-    Ok(unsafe {
-        (
-            input.get_unchecked(..end),
-            input.get_unchecked(end + offset..),
-        )
-    })
-}
-
-pub fn take_until(input: &str, delim: u8) -> (&str, &str) {
-    debug_assert!(delim < 128); // only basic ascii
-    if let Some(end) = memchr(delim, input.as_bytes()) {
-        // safety, memchr returns indices that are inside the input length and we only split on ascii
-        unsafe { (input.get_unchecked(end..), input.get_unchecked(..end)) }
-    } else {
-        ("", input)
-    }
-}
-
-pub fn skip(input: &str, count: usize) -> Result<&str> {
-    input.get(count..).ok_or(Error::Incomplete)
-}
-
-pub fn skip_matches(input: &str, char: u8) -> (&str, bool) {
-    if input.as_bytes().get(0) == Some(&char) {
-        // safety, we verified that the input has a length of at least 1
-        (unsafe { input.get_unchecked(1..) }, true)
-    } else {
-        (input, false)
-    }
-}
-
-pub fn find_between_end(input: &str, start: u8, end: u8) -> Option<&str> {
-    debug_assert!(start < 128 && end < 128); // only basic ascii
-    let bytes = input.as_bytes();
-    let end = memrchr(end, bytes)?;
-    // safety, memchr returns indices that are inside the input
-    let start = memrchr(start, unsafe { &bytes.get_unchecked(0..end) })?;
-    // safety, memchr returns indices that are inside the input length and we only split on ascii
-    Some(unsafe { input.get_unchecked((start + 1)..end) })
-}
-
-#[test]
-fn test_find_between_end() {
-    assert_eq!(Some("foo"), find_between_end("asd[foo]bar", b'[', b']'));
-    assert_eq!(None, find_between_end("asd]foo[bar", b'[', b']'));
 }

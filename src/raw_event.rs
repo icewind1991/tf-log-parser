@@ -1,4 +1,5 @@
-use crate::common::{split_once, Team};
+use crate::common::Team;
+use crate::parsing::split_once;
 use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};

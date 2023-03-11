@@ -19,6 +19,7 @@ mod common;
 pub mod event;
 #[macro_use]
 pub mod module;
+pub(crate) mod parsing;
 pub mod raw_event;
 mod subjectmap;
 

@@ -2,7 +2,7 @@ use crate::event::{param_parse_with, parse_field, ParamIter};
 use crate::raw_event::RawSubject;
 use crate::{Error, Event, IResult};
 
-use crate::common::{skip, take_until};
+use crate::parsing::{skip, take_until};
 
 #[derive(Debug, Event)]
 pub struct RoundWinEvent<'a> {

@@ -2,8 +2,8 @@ mod game;
 mod medic;
 mod player;
 
-use crate::common::{skip, skip_matches, split_once};
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
+use crate::parsing::{skip, skip_matches, split_once};
 use crate::raw_event::{against_subject_parser, RawSubject};
 use crate::{Error, IResult, RawEvent, RawEventType, Result, SubjectId};
 pub use game::*;
