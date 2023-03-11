@@ -148,7 +148,7 @@ pub enum RawEventType {
     #[token(r#"joined"#)]
     Joined,
     #[token(r#"changed role"#)]
-    ChangedRole,
+    RoleChange,
     #[token(r#"triggered "shot_fired""#)]
     ShotFired,
     #[token(r#"triggered "shot_hit""#)]
@@ -158,7 +158,7 @@ pub enum RawEventType {
     #[token(r#"triggered "healed""#)]
     Healed,
     #[token(r#"triggered "first_heal_after_spawn""#)]
-    FirstHealAfterSpawn,
+    FirstHeal,
     #[token(r#"killed"#)]
     Killed,
     #[token(r#"triggered "kill assist""#)]
@@ -178,15 +178,15 @@ pub enum RawEventType {
     #[token(r#"triggered "empty_uber""#)]
     EmptyUber,
     #[token(r#"triggered "player_builtobject""#)]
-    PlayerBuiltObject,
+    BuiltObject,
     #[token(r#"triggered "player_dropobject""#)]
     PlayerCarryObject,
     #[token(r#"triggered "player_carryobject""#)]
     PlayerDropObject,
     #[token(r#"triggered "killedobject""#)]
-    PlayerKilledObject,
+    KilledObject,
     #[token(r#"triggered "object_detonated""#)]
-    PlayerExtinguished,
+    Extinguished,
     #[token(r#"triggered "player_extinguished""#)]
     ObjectDetonated,
     #[token(r#"picked up"#)]
@@ -196,13 +196,13 @@ pub enum RawEventType {
     #[token(r#"triggered "medic_death_ex""#)]
     MedicDeathEx,
     #[token(r#"triggered "chargeended""#)]
-    ChargeEnd,
+    ChargeEnded,
     #[token(r#"triggered "chargeready""#)]
     ChargeReady,
     #[token(r#"triggered "chargedeployed""#)]
     ChargeDeployed,
     #[token(r#"triggered "lost_uber_advantage""#)]
-    UberAdvantageLost,
+    AdvantageLost,
     #[token(r#"triggered "Round_Start""#)]
     RoundStart,
     #[token(r#"triggered "Round_Setup_Begin""#)]
@@ -222,7 +222,7 @@ pub enum RawEventType {
     #[token(r#"triggered "Mini_Round_Length""#)]
     MiniRoundLength,
     #[token(r#"triggered "Round_Overtime""#)]
-    RoundOvertime,
+    RoundOverTime,
     #[token(r#"triggered "pointcaptured""#)]
     PointCaptured,
     #[token(r#"triggered "captureblocked""#)]
@@ -246,7 +246,7 @@ pub enum RawEventType {
     #[token(r#"connected,"#)]
     Connected,
     #[token(r#"disconnected"#)]
-    Disconnected,
+    Disconnect,
     #[token(r#"STEAM USERID validated"#)]
     SteamIdValidated,
     #[token(r#"entered the game"#)]
@@ -258,7 +258,7 @@ pub enum RawEventType {
     #[token(r#"The log might have not been uploaded."#)]
     NotUploaded,
     #[token(r#"mode started"#)]
-    TournamentStart,
+    TournamentModeStarted,
     #[token(r#"triggered "flagevent""#)]
     FlagEvent,
     #[error]
@@ -280,7 +280,7 @@ fn test_parse_raw() {
         RawEvent {
             date: RawDate("08/06/2018 - 21:13:57"),
             subject: RawSubject::Player("makxbi<27><[U:1:40364391]><Red>"),
-            ty: RawEventType::ChangedRole,
+            ty: RawEventType::RoleChange,
             params: r#"to "sniper""#,
         },
         raw

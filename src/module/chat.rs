@@ -65,13 +65,13 @@ impl GlobalData for ChatMessages {
             GameEvent::SayTeam(message) => self.0.push(BareChatMessage {
                 time,
                 subject,
-                message: message.to_string(),
+                message: message.text.to_string(),
                 chat_type: ChatType::Team,
             }),
             GameEvent::Say(message) => self.0.push(BareChatMessage {
                 time,
                 subject,
-                message: message.to_string(),
+                message: message.text.to_string(),
                 chat_type: ChatType::All,
             }),
             _ => {}

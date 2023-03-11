@@ -65,11 +65,11 @@ impl PlayerSpecificData for MedicStatsBuilder {
         matches!(
             ty,
             RawEventType::ChargeDeployed
-                | RawEventType::ChargeEnd
+                | RawEventType::ChargeEnded
                 | RawEventType::ChargeReady
-                | RawEventType::UberAdvantageLost
+                | RawEventType::AdvantageLost
                 | RawEventType::MedicDeath
-                | RawEventType::FirstHealAfterSpawn
+                | RawEventType::FirstHeal
         )
     }
 

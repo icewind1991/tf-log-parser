@@ -213,7 +213,7 @@ impl GlobalData for LobbySettingsHandler {
             return;
         }
         if let GameEvent::Say(msg) = event {
-            if let Err(e) = self.try_handle(msg) {
+            if let Err(e) = self.try_handle(msg.text) {
                 *self = LobbySettingsHandler::Err(e)
             }
         }

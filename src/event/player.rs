@@ -123,3 +123,15 @@ pub struct ExtinguishedEvent<'a> {
     pub attacker_position: Option<(i32, i32, i32)>,
     pub victim_position: Option<(i32, i32, i32)>,
 }
+
+#[derive(Debug, Event)]
+pub struct SayEvent<'a> {
+    #[event(unnamed)]
+    pub text: &'a str,
+}
+
+#[derive(Debug, Event)]
+pub struct SayTeamEvent<'a> {
+    #[event(unnamed)]
+    pub text: &'a str,
+}

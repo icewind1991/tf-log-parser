@@ -12,7 +12,7 @@ pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::num::ParseIntError;
-pub use tf_log_parser_derive::Event;
+pub(crate) use tf_log_parser_derive::{Event, Events};
 use thiserror::Error;
 
 mod common;

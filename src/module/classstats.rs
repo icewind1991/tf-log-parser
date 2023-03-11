@@ -52,7 +52,7 @@ impl EventHandler for ClassStatsHandler {
                 | RawEventType::KillAssist
                 | RawEventType::Damage
                 | RawEventType::Spawned
-                | RawEventType::ChangedRole
+                | RawEventType::RoleChange
                 | RawEventType::RoundWin
                 | RawEventType::RoundStart
         )
@@ -76,7 +76,7 @@ impl EventHandler for ClassStatsHandler {
             GameEvent::RoundWin(_) => {
                 self.active = false;
             }
-            GameEvent::Kill(kill) if self.active => {
+            GameEvent::Killed(kill) if self.active => {
                 if let Ok(target) = kill.target.id() {
                     let subject_class = self.data.get(&subject).map(|data| data.class);
                     let target_data = self.data_mut(target);

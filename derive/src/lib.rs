@@ -3,8 +3,10 @@
 extern crate proc_macro;
 
 mod event;
+mod events;
 
 use crate::event::Event;
+use crate::events::Events;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::fmt::{Debug, Display};
@@ -12,8 +14,16 @@ use syn::{parse_macro_input, DeriveInput, Error, Result};
 
 /// Derive the `Event` trait for a struct
 #[proc_macro_derive(Event, attributes(event))]
-pub fn derive_pod(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_event(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let expanded = derive_trait::<Event>(parse_macro_input!(input as DeriveInput));
+
+    proc_macro::TokenStream::from(expanded)
+}
+
+/// Derive the `Events` trait for a struct
+#[proc_macro_derive(Events, attributes())]
+pub fn derive_events(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let expanded = derive_trait::<Events>(parse_macro_input!(input as DeriveInput));
 
     proc_macro::TokenStream::from(expanded)
 }
