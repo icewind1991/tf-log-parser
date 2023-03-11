@@ -180,9 +180,9 @@ pub enum RawEventType {
     #[token(r#"triggered "player_builtobject""#)]
     BuiltObject,
     #[token(r#"triggered "player_dropobject""#)]
-    PlayerCarryObject,
+    CarryObject,
     #[token(r#"triggered "player_carryobject""#)]
-    PlayerDropObject,
+    DropObject,
     #[token(r#"triggered "killedobject""#)]
     KilledObject,
     #[token(r#"triggered "object_detonated""#)]

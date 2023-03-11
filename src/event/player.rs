@@ -101,6 +101,18 @@ pub struct BuiltObjectEvent<'a> {
 }
 
 #[derive(Debug, Event)]
+pub struct BuiltCarryEvent<'a> {
+    pub object: Option<&'a str>,
+    pub position: Option<(i32, i32, i32)>,
+}
+
+#[derive(Debug, Event)]
+pub struct DropObjectEvent<'a> {
+    pub object: Option<&'a str>,
+    pub position: Option<(i32, i32, i32)>,
+}
+
+#[derive(Debug, Event)]
 pub struct KilledObjectEvent<'a> {
     pub object: Option<&'a str>,
     pub weapon: Option<&'a str>,

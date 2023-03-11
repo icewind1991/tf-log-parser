@@ -120,7 +120,7 @@ impl<'a> LineSplit<'a> {
         LineSplit {
             input,
             start: 0,
-            iter: find_iter(input.as_bytes(), b"L "),
+            iter: find_iter(input.as_bytes(), b"\nL "),
         }
     }
 }
@@ -131,8 +131,8 @@ impl<'a> Iterator for LineSplit<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(next) => {
-                let line = &self.input[self.start..next - 1]; // -1 for the newline we strip
-                self.start = next + 2;
+                let line = &self.input[self.start..next];
+                self.start = next + 3;
                 Some(line)
             }
             None if self.start < self.input.len() => {

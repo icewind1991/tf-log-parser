@@ -93,12 +93,27 @@ pub enum GameEvent<'a> {
     PointCaptured(PointCapturedEvent<'a>),
     CurrentScore(CurrentScoreEvent),
     BuiltObject(BuiltObjectEvent<'a>),
+    DropObject(DropObjectEvent<'a>),
+    CarryObject(BuiltCarryEvent<'a>),
     KilledObject(KilledObjectEvent<'a>),
     Extinguished(ExtinguishedEvent<'a>),
     GameOver(GameOverEvent<'a>),
     FinalScore(FinalScoreEvent),
     ObjectDetonated(ObjectDetonatedEvent<'a>),
+    Request(UnparsedEvent<'a>),
+    Response(UnparsedEvent<'a>),
     LogFileClosed,
+}
+
+#[derive(Debug)]
+pub struct UnparsedEvent<'a> {
+    pub params: &'a str,
+}
+
+impl<'a> Event<'a> for UnparsedEvent<'a> {
+    fn parse(input: &'a str) -> IResult<Self> {
+        Ok(("", UnparsedEvent { params: input }))
+    }
 }
 
 pub struct ParamIter<'a> {

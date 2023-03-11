@@ -26,6 +26,7 @@ impl Derivable for Events {
         Ok(
             quote_spanned!(span => impl #impl_generics #enum_ident #ty_generics #where_clause {
                 pub fn parse(raw: &RawEvent<'a>) -> Result<Self, GameEventError> {
+                    dbg!(raw);
                     Ok(match raw.ty {
                         #(#variants)*
                         _ => {
