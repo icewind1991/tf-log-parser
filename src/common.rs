@@ -68,6 +68,7 @@ pub enum Class {
     Medic,
     Sniper,
     Spy,
+    Unknown,
 }
 
 impl EventFieldFromStr for Class {}
@@ -84,13 +85,14 @@ impl Class {
             Class::Medic => "medic",
             Class::Sniper => "sniper",
             Class::Spy => "spy",
+            Class::Unknown => "unknown",
         }
     }
 }
 
 impl Default for Class {
     fn default() -> Self {
-        Class::Scout
+        Class::Unknown
     }
 }
 
@@ -108,12 +110,12 @@ impl FromStr for Class {
             "Medic" | "medic" => Ok(Class::Medic),
             "Sniper" | "sniper" => Ok(Class::Sniper),
             "Spy" | "spy" => Ok(Class::Spy),
-            _ => Err(()),
+            _ => Ok(Class::Unknown),
         }
     }
 }
 
-pub struct ClassMap<T>([T; 9]);
+pub struct ClassMap<T>([T; 10]);
 
 impl<T> Index<Class> for ClassMap<T> {
     type Output = T;
@@ -129,6 +131,7 @@ impl<T> Index<Class> for ClassMap<T> {
             Class::Medic => &self.0[6],
             Class::Sniper => &self.0[7],
             Class::Spy => &self.0[8],
+            Class::Unknown => &self.0[9],
         }
     }
 }
@@ -145,6 +148,7 @@ impl<T> IndexMut<Class> for ClassMap<T> {
             Class::Medic => &mut self.0[6],
             Class::Sniper => &mut self.0[7],
             Class::Spy => &mut self.0[8],
+            Class::Unknown => &mut self.0[9],
         }
     }
 }
@@ -170,13 +174,13 @@ where
 
 impl<T: Default> Default for ClassMap<T> {
     fn default() -> Self {
-        ClassMap(<[T; 9]>::default())
+        ClassMap(<[T; 10]>::default())
     }
 }
 
 impl<T: Debug> Debug for ClassMap<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <[T; 9] as Debug>::fmt(&self.0, f)
+        <[T; 10] as Debug>::fmt(&self.0, f)
     }
 }
 
