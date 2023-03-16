@@ -1,6 +1,6 @@
 use crate::common::{Class, Team};
 use crate::event::{param_parse_with, parse_field, quoted, ParamIter};
-use crate::raw_event::RawSubject;
+use crate::raw_event::{subject_parser, RawSubject};
 use crate::{Error, Event, Result};
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
@@ -28,6 +28,7 @@ pub struct DamageEvent<'a> {
 #[derive(Debug, Event)]
 pub struct KillEvent<'a> {
     #[event(unnamed)]
+    #[event(subject)]
     #[event(skip_after = 1)]
     pub target: RawSubject<'a>,
     #[event(name = "with")]

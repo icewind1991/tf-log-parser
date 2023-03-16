@@ -158,6 +158,7 @@ pub struct EventParam {
     optional: bool,
     skip_after: u64,
     quoted: bool,
+    subject: bool,
 }
 
 impl EventParam {
@@ -190,6 +191,7 @@ impl EventParam {
         }
         let quoted =
             get_attribute_value(&input.attrs, &["event", "quoted"]).unwrap_or(param_name.is_none());
+        let subject = contains_attribute(&input.attrs, &["event", "subject"]);
 
         Ok(EventParam {
             span: input.span(),
@@ -198,6 +200,7 @@ impl EventParam {
             optional,
             skip_after,
             quoted,
+            subject,
         })
     }
 
@@ -206,7 +209,9 @@ impl EventParam {
     }
 
     fn field_parser(&self) -> TokenStream {
-        if self.quoted {
+        if self.subject {
+            quote_spanned!(self.span() => subject_parser)
+        } else if self.quoted {
             quote_spanned!(self.span() => quoted(parse_field))
         } else {
             quote_spanned!(self.span() => parse_field)
