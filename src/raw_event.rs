@@ -84,9 +84,9 @@ impl<'a> RawSubject<'a> {
 }
 
 pub fn split_player_subject(input: &str) -> Result<(&str, &str, &str, &str)> {
-    let mut parts = input.splitn(4, '<');
+    let mut parts = input.rsplitn(4, '<');
     let (name, user_id, steam_id, team) =
-        if let (Some(name), Some(user_id), Some(steam_id), Some(team)) =
+        if let (Some(team), Some(steam_id), Some(user_id), Some(name)) =
             (parts.next(), parts.next(), parts.next(), parts.next())
         {
             (
@@ -107,7 +107,15 @@ fn test_split_player_subject() {
     assert_eq!(
         ("Fin", "4", "[U:1:129852188]", "Blue"),
         split_player_subject("Fin<4><[U:1:129852188]><Blue>").unwrap()
-    )
+    );
+    assert_eq!(
+        ("Electra<3", "8", "[U:1:104485840]", "Red"),
+        split_player_subject("Electra<3<8><[U:1:104485840]><Red>").unwrap()
+    );
+    assert_eq!(
+        ("sorry, squidie", "15", "[U:1:83437541]", "Red"),
+        split_player_subject("sorry, squidie<15><[U:1:83437541]><Red>").unwrap()
+    );
 }
 
 pub fn against_subject_parser(input: &str) -> Result<RawSubject> {
