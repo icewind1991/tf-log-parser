@@ -138,7 +138,8 @@ impl<'a> Iterator for ParamIter<'a> {
 fn param_pair_parse(input: &str) -> IResult<'_, (&str, &str)> {
     let (input, open_tag) = skip_matches(input, b'(');
 
-    let (key, input) = split_once(input, b' ', 2)?;
+    let (key, input) = split_once(input, b' ', 1)?;
+    let input = skip(input, 1)?;
     let (value, input) = split_once(input, b'"', 1)?;
 
     let input = if open_tag { skip(input, 1)? } else { input };

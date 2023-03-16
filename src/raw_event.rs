@@ -1,5 +1,5 @@
 use crate::common::Team;
-use crate::parsing::{split_once, split_subject_end};
+use crate::parsing::{skip, split_once, split_subject_end};
 use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -19,7 +19,6 @@ pub struct RawEvent<'a> {
 
 impl<'a> RawEvent<'a> {
     pub fn parse(line: &'a str) -> Result<Self> {
-        debug_assert!(!line.ends_with("\n"));
         event_parser(line)
     }
 }
@@ -29,7 +28,7 @@ fn event_parser(input: &str) -> Result<RawEvent> {
 
     let (input, subject) = subject_parser(&input[23..])?;
 
-    let (input, ty) = event_type_parser(&input[1..])?;
+    let (input, ty) = event_type_parser(input)?;
 
     let params = &input[(!input.is_empty() as usize)..];
 
@@ -133,6 +132,7 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
         let Ok((player, input)) = split_subject_end(input, 1) else {
             return Ok((full, RawSubject::Console))
         };
+        let input = skip(input, 1)?;
         if player.ends_with("le>") {
             Ok((input, RawSubject::Console))
         } else {
@@ -141,15 +141,18 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
     } else if input.starts_with("Te") {
         // Team "red" or Team "blue"
         if &input[6..7] == "r" {
-            Ok((&input[10..], RawSubject::Team(Team::Red)))
+            Ok((&input[11..], RawSubject::Team(Team::Red)))
         } else if &input[6..7] == "b" {
-            Ok((&input[11..], RawSubject::Team(Team::Blue)))
+            Ok((&input[12..], RawSubject::Team(Team::Blue)))
         } else {
             let (_, input) = split_once(&input[7..], b'"', 1)?;
+            let input = skip(input, 1)?;
             Ok((input, RawSubject::Team(Team::Spectator)))
         }
     } else {
-        let (system, input) = split_once(input, b' ', 0)?;
+        let Ok((system, input)) = split_once(input, b' ', 1) else {
+            return Ok(("", RawSubject::System(input)))
+        };
         Ok((input, RawSubject::System(system)))
     }
 }

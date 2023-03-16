@@ -5,6 +5,7 @@ use once_cell::unsync::Lazy;
 
 pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
     debug_assert!(delim < 128); // only basic ascii
+    debug_assert!(offset <= 1);
     let end = memchr(delim, input.as_bytes()).ok_or(Error::Incomplete)?;
     // safety, memchr returns indices that are inside the input length and we only split on ascii
     Ok(unsafe {
@@ -22,6 +23,7 @@ thread_local! {
 pub fn split_subject_end<'a>(input: &'a str, offset: usize) -> Result<(&'a str, &'a str)> {
     let start_offset = 1;
     let end_offset = start_offset + offset;
+    debug_assert!(offset <= 2);
     let end = SUBJECT_END_FINDER
         .with(|finder| finder.find(input.as_bytes()))
         .ok_or(Error::Incomplete)?;

@@ -93,7 +93,7 @@ impl EventHandler for ClassStatsHandler {
             }
             GameEvent::Damage(DamageEvent {
                 damage: Some(damage),
-                target,
+                target: Some(target),
                 ..
             }) if self.active => {
                 if let Some(target_class) = self.get_class(target) {
