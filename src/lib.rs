@@ -78,12 +78,27 @@ pub fn parse_with_handler<Handler: EventHandler>(
     let mut start_time: Option<NaiveDateTime> = None;
     let mut subjects = SubjectMap::<Handler::PerSubjectData>::with_capacity(32);
 
+    let mut game_over = false;
+
     for event_res in events {
         let raw_event = event_res?;
+        if raw_event.ty == RawEventType::GameOver {
+            game_over = true;
+        }
         let should_handle = Handler::does_handle(raw_event.ty);
         if should_handle || start_time.is_none() {
             if should_handle {
-                let event = GameEvent::parse(&raw_event)?;
+                let event = match GameEvent::parse(&raw_event) {
+                    Ok(event) => event,
+                    Err(e) => {
+                        // handle truncated logs after game over
+                        if game_over {
+                            break;
+                        } else {
+                            return Err(e.into());
+                        }
+                    }
+                };
                 handler.process(&raw_event, &event, &mut start_time, &mut subjects)?;
             }
         }
