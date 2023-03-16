@@ -228,19 +228,16 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
         Ok(match raw {
             RawSubject::Player(raw) => {
                 if let Some(raw_account_id) = find_between_end(raw, b':', b']') {
-                    SubjectId::Player(
-                        raw_account_id
-                            .parse()
-                            .map_err(|_| SubjectError::InvalidSteamId)?,
-                    )
-                } else {
-                    let (_, user_id, steam_id, _) =
-                        split_player_subject(raw).map_err(|_| SubjectError::InvalidSteamId)?;
-                    if let Ok(steam_id) = SteamID::from_steam2(steam_id) {
-                        SubjectId::Player(steam_id.account_id())
-                    } else {
-                        SubjectId::Bot(user_id.parse().map_err(|_| SubjectError::InvalidUserId)?)
+                    if let Ok(account_id) = raw_account_id.parse() {
+                        return Ok(SubjectId::Player(account_id));
                     }
+                }
+                let (_, user_id, steam_id, _) = split_player_subject(raw)
+                    .map_err(|_| SubjectError::InvalidSteamId(raw.to_string()))?;
+                if let Ok(steam_id) = SteamID::from_steam2(steam_id) {
+                    SubjectId::Player(steam_id.account_id())
+                } else {
+                    SubjectId::Bot(user_id.parse().map_err(|_| SubjectError::InvalidUserId)?)
                 }
             }
             RawSubject::Team(team) => SubjectId::Team(*team),
@@ -287,8 +284,8 @@ impl SubjectData {
 pub enum SubjectError {
     #[error("Invalid user id")]
     InvalidUserId,
-    #[error("Invalid steam id")]
-    InvalidSteamId,
+    #[error("Invalid steam id for \"{0}\"")]
+    InvalidSteamId(String),
     #[error("Invalid team name")]
     InvalidTeam,
 }
