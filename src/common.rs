@@ -195,6 +195,7 @@ impl<T: PartialEq> PartialEq for ClassMap<T> {
 pub enum SubjectId {
     Player(u32),
     Team(Team),
+    Bot(u16),
     System,
     World,
     Console,
@@ -227,7 +228,13 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
                             .map_err(|_| SubjectError::InvalidSteamId)?,
                     )
                 } else {
-                    return Err(SubjectError::InvalidSteamId);
+                    let (_, user_id, steam_id, _) =
+                        split_player_subject(raw).map_err(|_| SubjectError::InvalidSteamId)?;
+                    if let Ok(steam_id) = SteamID::from_steam2(steam_id) {
+                        SubjectId::Player(steam_id.account_id())
+                    } else {
+                        SubjectId::Bot(user_id.parse().map_err(|_| SubjectError::InvalidUserId)?)
+                    }
                 }
             }
             RawSubject::Team(team) => SubjectId::Team(*team),
@@ -248,6 +255,11 @@ pub enum SubjectData {
     },
     Team(Team),
     System(String),
+    Bot {
+        name: String,
+        user_id: u16,
+        team: Team,
+    },
     Console,
     World,
 }
@@ -258,6 +270,7 @@ impl SubjectData {
             SubjectData::Player { steam_id, .. } => SubjectId::Player(steam_id.account_id()),
             SubjectData::Team(team) => SubjectId::Team(*team),
             SubjectData::System(_) => SubjectId::System,
+            SubjectData::Bot { user_id, .. } => SubjectId::Bot(*user_id),
             SubjectData::Console => SubjectId::Console,
             SubjectData::World => SubjectId::World,
         }
@@ -282,12 +295,21 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
             RawSubject::Player(raw) => {
                 let (name, user_id, steam_id, team) =
                     split_player_subject(raw).map_err(|_| SubjectError::InvalidUserId)?;
-                SubjectData::Player {
-                    name: name.to_string(),
-                    user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
-                    steam_id: SteamID::from_steam3(steam_id)
-                        .map_err(|_| SubjectError::InvalidSteamId)?,
-                    team: team.parse().unwrap_or_default(),
+                if let Ok(steam_id) =
+                    SteamID::from_steam3(steam_id).or_else(|_| SteamID::from_steam2(steam_id))
+                {
+                    SubjectData::Player {
+                        name: name.to_string(),
+                        user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
+                        steam_id,
+                        team: team.parse().unwrap_or_default(),
+                    }
+                } else {
+                    SubjectData::Bot {
+                        name: name.to_string(),
+                        user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
+                        team: team.parse().unwrap_or_default(),
+                    }
                 }
             }
             RawSubject::Team(team) => SubjectData::Team(*team),
