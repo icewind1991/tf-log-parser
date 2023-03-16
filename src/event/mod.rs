@@ -140,9 +140,16 @@ fn param_pair_parse(input: &str) -> IResult<'_, (&str, &str)> {
 
     let (key, input) = split_once(input, b' ', 1)?;
     let input = skip(input, 1)?;
-    let (value, input) = split_once(input, b'"', 1)?;
+
+    // hack to handle quotes in names
+    let (value, input) = if key == "against" || key == "objectowner" {
+        split_subject_end(input, 1)?
+    } else {
+        split_once(input, b'"', 1)?
+    };
 
     let input = if open_tag { skip(input, 1)? } else { input };
+    let (input, _) = skip_matches(input, b' ');
     Ok((input, (key, value)))
 }
 

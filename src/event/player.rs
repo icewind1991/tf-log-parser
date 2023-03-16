@@ -18,7 +18,8 @@ pub struct ShotHitEvent<'a> {
 #[derive(Debug, Event)]
 pub struct DamageEvent<'a> {
     #[event(name = "against")]
-    pub target: Option<RawSubject<'a>>,
+    #[event(default)]
+    pub target: RawSubject<'a>,
     pub damage: Option<NonZeroU32>,
     #[event(name = "realdamage")]
     pub real_damage: Option<NonZeroU32>,

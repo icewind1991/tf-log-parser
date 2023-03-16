@@ -76,6 +76,12 @@ pub enum RawSubject<'a> {
     World,
 }
 
+impl Default for RawSubject<'static> {
+    fn default() -> Self {
+        RawSubject::System("unknown")
+    }
+}
+
 impl<'a> RawSubject<'a> {
     pub fn id(&self) -> Result<SubjectId, SubjectError> {
         self.try_into()
