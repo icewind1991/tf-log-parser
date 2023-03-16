@@ -29,6 +29,8 @@ pub enum Error {
     Malformed,
     #[error("Incomplete logfile")]
     Incomplete,
+    #[error("Incomplete logfile")]
+    Truncated, // like incomplete, but when we're certain the log is at fault, and not the parser
     #[error("Malformed subject: {0}")]
     Subject(#[from] SubjectError),
     #[error("{0}")]
@@ -71,28 +73,27 @@ pub fn parse_with_handler<Handler: EventHandler>(
     ),
     Error,
 > {
-    let events = raw_events(log);
+    let mut events = raw_events(log);
 
     let mut handler = Handler::default();
 
     let mut start_time: Option<NaiveDateTime> = None;
     let mut subjects = SubjectMap::<Handler::PerSubjectData>::with_capacity(32);
 
-    let mut game_over = false;
-
-    for event_res in events {
-        let raw_event = event_res?;
-        if raw_event.ty == RawEventType::GameOver {
-            game_over = true;
-        }
+    while let Some(event_res) = events.next() {
+        let raw_event = match event_res {
+            Ok(raw_event) => raw_event,
+            Err(Error::Truncated) => break,
+            Err(e) => return Err(e),
+        };
         let should_handle = Handler::does_handle(raw_event.ty);
         if should_handle || start_time.is_none() {
             if should_handle {
                 let event = match GameEvent::parse(&raw_event) {
                     Ok(event) => event,
                     Err(e) => {
-                        // handle truncated logs after game over
-                        if game_over {
+                        // handle truncated logs
+                        if events.next().is_none() {
                             break;
                         } else {
                             return Err(e.into());

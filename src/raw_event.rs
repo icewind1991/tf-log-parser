@@ -24,6 +24,9 @@ impl<'a> RawEvent<'a> {
 }
 
 fn event_parser(input: &str) -> Result<RawEvent> {
+    if input.len() < 30 {
+        return Err(Error::Truncated);
+    }
     let date = RawDate(&input[0..21]);
 
     let (input, subject) = subject_parser(&input[23..])?;
