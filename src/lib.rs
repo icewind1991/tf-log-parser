@@ -120,7 +120,8 @@ pub struct LineSplit<'a> {
 
 impl<'a> LineSplit<'a> {
     pub fn new(input: &'a str) -> Self {
-        let input = &input[2..]; //skip first
+        // skip first delimiter, and any byte order mark
+        let (_, input) = input.split_once("L ").unwrap_or_default();
         LineSplit {
             input,
             start: 0,
