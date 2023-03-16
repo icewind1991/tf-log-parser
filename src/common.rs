@@ -190,6 +190,12 @@ impl<T: PartialEq> PartialEq for ClassMap<T> {
     }
 }
 
+impl<T> From<ClassMap<T>> for [T; 10] {
+    fn from(value: ClassMap<T>) -> Self {
+        value.0
+    }
+}
+
 /// Optimized subject id
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Ord, PartialOrd, Hash)]
 pub enum SubjectId {

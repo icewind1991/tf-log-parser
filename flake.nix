@@ -31,6 +31,7 @@
           hyperfine
           cargo-expand
           rustup
+          cargo-insta
         ];
       };
     });

@@ -32,3 +32,12 @@ impl PlayerSpecificData for HealSpread {
         self
     }
 }
+
+impl IntoIterator for HealSpread {
+    type Item = (SteamId3, u32);
+    type IntoIter = <BTreeMap<SteamId3, u32> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}

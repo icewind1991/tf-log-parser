@@ -8,10 +8,10 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Default, PartialEq)]
 pub struct ClassStats {
-    kills: ClassMap<u8>,
-    deaths: ClassMap<u8>,
-    assists: ClassMap<u8>,
-    damage: ClassMap<u16>,
+    pub kills: ClassMap<u8>,
+    pub deaths: ClassMap<u8>,
+    pub assists: ClassMap<u8>,
+    pub damage: ClassMap<u16>,
 }
 
 #[derive(Default)]

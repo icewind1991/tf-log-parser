@@ -170,7 +170,7 @@ macro_rules! handler {
             }
 
             pub struct [<$name PerSubjectOutput>] {
-                pub $($child: <$ty as $crate::EventHandler>::PerSubjectOutput),*
+                $(pub $child: <$ty as $crate::EventHandler>::PerSubjectOutput),*
             }
 
             impl serde::Serialize for [<$name PerSubjectOutput>] {
