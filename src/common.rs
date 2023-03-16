@@ -242,7 +242,7 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
 pub enum SubjectData {
     Player {
         name: String,
-        user_id: u8,
+        user_id: u16,
         steam_id: SteamID,
         team: Team,
     },
