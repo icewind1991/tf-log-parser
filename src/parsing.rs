@@ -1,5 +1,7 @@
 use crate::{Error, Result};
+use memchr::memmem::Finder;
 use memchr::{memchr, memrchr};
+use once_cell::unsync::Lazy;
 
 pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)> {
     debug_assert!(delim < 128); // only basic ascii
@@ -9,6 +11,25 @@ pub fn split_once(input: &str, delim: u8, offset: usize) -> Result<(&str, &str)>
         (
             input.get_unchecked(..end),
             input.get_unchecked(end + offset..),
+        )
+    })
+}
+
+thread_local! {
+    static SUBJECT_END_FINDER: Lazy<Finder<'static>> = Lazy::new(|| Finder::new(br#">""#));
+}
+
+pub fn split_subject_end<'a>(input: &'a str, offset: usize) -> Result<(&'a str, &'a str)> {
+    let start_offset = 1;
+    let end_offset = start_offset + offset;
+    let end = SUBJECT_END_FINDER
+        .with(|finder| finder.find(input.as_bytes()))
+        .ok_or(Error::Incomplete)?;
+    // safety, memchr returns indices that are inside the input length and we only split on ascii
+    Ok(unsafe {
+        (
+            input.get_unchecked(..end + start_offset),
+            input.get_unchecked(end + end_offset..),
         )
     })
 }

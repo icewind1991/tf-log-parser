@@ -1,5 +1,5 @@
 use crate::common::Team;
-use crate::parsing::split_once;
+use crate::parsing::{split_once, split_subject_end};
 use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -120,7 +120,7 @@ fn test_split_player_subject() {
 
 pub fn against_subject_parser(input: &str) -> Result<RawSubject> {
     // "against" fields are always players, and unquoted
-    if input.ends_with("e>") {
+    if input.ends_with("le>") {
         Ok(RawSubject::Console)
     } else {
         Ok(RawSubject::Player(input))
@@ -128,9 +128,12 @@ pub fn against_subject_parser(input: &str) -> Result<RawSubject> {
 }
 
 pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
+    let full = input;
     if let Some(input) = input.strip_prefix('"') {
-        let (player, input) = split_once(input, b'"', 1)?;
-        if player.ends_with("e>") {
+        let Ok((player, input)) = split_subject_end(input, 1) else {
+            return Ok((full, RawSubject::Console))
+        };
+        if player.ends_with("le>") {
             Ok((input, RawSubject::Console))
         } else {
             Ok((input, RawSubject::Player(player)))
@@ -149,6 +152,17 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
         let (system, input) = split_once(input, b' ', 0)?;
         Ok((input, RawSubject::System(system)))
     }
+}
+
+#[test]
+fn test_subject_parser() {
+    assert_eq!(
+        (
+            "connected",
+            RawSubject::Player(r#"Buddie :")<25><[U:1:123]><>"#)
+        ),
+        subject_parser(r#""Buddie :")<25><[U:1:123]><>" connected"#).unwrap()
+    );
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Logos)]
@@ -194,9 +208,9 @@ pub enum RawEventType {
     #[token(r#"triggered "killedobject""#)]
     KilledObject,
     #[token(r#"triggered "object_detonated""#)]
-    Extinguished,
-    #[token(r#"triggered "player_extinguished""#)]
     ObjectDetonated,
+    #[token(r#"triggered "player_extinguished""#)]
+    Extinguished,
     #[token(r#"picked up"#)]
     PickedUp,
     #[token(r#"triggered "medic_death""#)]
@@ -269,6 +283,8 @@ pub enum RawEventType {
     TournamentModeStarted,
     #[token(r#"triggered "flagevent""#)]
     FlagEvent,
+    #[token(r#"cvars"#)]
+    CVars,
     #[error]
     Unknown,
 }

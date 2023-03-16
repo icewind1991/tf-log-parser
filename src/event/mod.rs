@@ -3,7 +3,7 @@ mod medic;
 mod player;
 
 use crate::event::game::{RoundLengthEvent, RoundWinEvent};
-use crate::parsing::{skip, skip_matches, split_once};
+use crate::parsing::{skip, skip_matches, split_once, split_subject_end};
 use crate::raw_event::{against_subject_parser, RawSubject};
 use crate::{Error, Events, IResult, RawEvent, RawEventType, Result, SubjectId};
 pub use game::*;
@@ -15,7 +15,7 @@ use std::str::FromStr;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GameEventError {
-    #[error("malformed game event({ty:?}): {err}")]
+    #[error("malformed game event({ty:?}): {err} in \"{params}\"")]
     Error {
         err: Box<Error>,
         ty: RawEventType,
@@ -167,7 +167,12 @@ pub fn param_parse_with<'a, T, P: Fn(&'a str) -> Result<T>>(
 
         let input = skip(input, key.len() + 2)?; // skip space + key + quote
 
-        let (value, input) = split_once(input, b'"', 1)?;
+        // hack to handle quotes in names
+        let (value, input) = if key == "against" || key == "objectowner" {
+            split_subject_end(input, 1)?
+        } else {
+            split_once(input, b'"', 1)?
+        };
 
         let value = parser(value)?;
 
