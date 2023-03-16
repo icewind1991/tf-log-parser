@@ -1,0 +1,300 @@
+---
+source: tests/snapshot.rs
+expression: log
+---
+{
+  "global": {
+    "chat": [
+      {
+        "time": 0,
+        "name": "Bv",
+        "steam_id": 76561198048943710,
+        "message": "[P-REC] Stop record.",
+        "chat_type": "Team"
+      },
+      {
+        "time": 0,
+        "name": "Charon",
+        "steam_id": 76561198061714753,
+        "message": "[P-REC] Stop record.",
+        "chat_type": "Team"
+      },
+      {
+        "time": 53,
+        "name": "Bv",
+        "steam_id": 76561198048943710,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 53,
+        "name": "Charon",
+        "steam_id": 76561198061714753,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      }
+    ]
+  },
+  "per_player": {
+    "[U:1:101449025]": {
+      "stats": {
+        "kills": [
+          0,
+          25,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "deaths": [
+          0,
+          32,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          0,
+          5039,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:101608870]": {
+      "stats": {
+        "kills": [
+          0,
+          31,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "deaths": [
+          0,
+          28,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          10,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          0,
+          8262,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:82123920]": {
+      "stats": {
+        "kills": [
+          0,
+          31,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "deaths": [
+          0,
+          29,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          6,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          0,
+          6461,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:88677982]": {
+      "stats": {
+        "kills": [
+          0,
+          30,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "deaths": [
+          0,
+          28,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          0,
+          5764,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    }
+  }
+}

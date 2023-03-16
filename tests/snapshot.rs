@@ -51,9 +51,13 @@ impl From<ClassStats> for ClassStatsRaw {
     }
 }
 
+#[test_case("log_6s.log")]
+#[test_case("log_2788889.log")]
 #[test_case("log_2892242.log")]
-fn test_parse(input: &str) {
-    let content = read_to_string(&format!("test_data/{}", input)).unwrap();
+#[test_case("log_bball.log")]
+#[test_case("log_hl.log")]
+fn test_parse(name: &str) {
+    let content = read_to_string(&format!("test_data/{}", name)).unwrap();
     let (global, per_player) = parse(&content).unwrap();
     let log = LogResult {
         global,
@@ -62,5 +66,5 @@ fn test_parse(input: &str) {
             .map(|(key, value)| (key.0.steam3(), value.into()))
             .collect(),
     };
-    insta::assert_json_snapshot!(log);
+    insta::assert_json_snapshot!(format!("parse-{}", name), log);
 }

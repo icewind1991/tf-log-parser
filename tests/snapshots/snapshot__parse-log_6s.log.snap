@@ -1,0 +1,1745 @@
+---
+source: tests/snapshot.rs
+expression: log
+---
+{
+  "global": {
+    "chat": [
+      {
+        "time": 4,
+        "name": "=(eGO)= PepperRabbit",
+        "steam_id": 76561197999942178,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 4,
+        "name": "raijin",
+        "steam_id": 76561198092494136,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 4,
+        "name": "=(eGO)= Noblenote",
+        "steam_id": 76561198049359343,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 4,
+        "name": "makxbi",
+        "steam_id": 76561198000630119,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 4,
+        "name": "Oh my.",
+        "steam_id": 76561198263165279,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 4,
+        "name": "=(eGO)= Dianite",
+        "steam_id": 76561198127826380,
+        "message": "[P-REC] Recording...",
+        "chat_type": "Team"
+      },
+      {
+        "time": 48,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "LOOOOOL",
+        "chat_type": "All"
+      },
+      {
+        "time": 57,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "I WAS GETTING EATEN BY INSECTS",
+        "chat_type": "All"
+      },
+      {
+        "time": 72,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "get a new spy",
+        "chat_type": "All"
+      },
+      {
+        "time": 74,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "holy shit this retard",
+        "chat_type": "All"
+      },
+      {
+        "time": 91,
+        "name": "=(eGO)= Dianite",
+        "steam_id": 76561198127826380,
+        "message": "No",
+        "chat_type": "All"
+      },
+      {
+        "time": 123,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "lol",
+        "chat_type": "All"
+      },
+      {
+        "time": 131,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "I love smacking snipers with rockets",
+        "chat_type": "All"
+      },
+      {
+        "time": 135,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": ":)",
+        "chat_type": "All"
+      },
+      {
+        "time": 140,
+        "name": "makxbi",
+        "steam_id": 76561198000630119,
+        "message": ":3",
+        "chat_type": "All"
+      },
+      {
+        "time": 144,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "OWO",
+        "chat_type": "All"
+      },
+      {
+        "time": 229,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "lol",
+        "chat_type": "All"
+      },
+      {
+        "time": 248,
+        "name": "aimboat",
+        "steam_id": 76561198218131923,
+        "message": "if only i had good ping",
+        "chat_type": "All"
+      },
+      {
+        "time": 347,
+        "name": "Wizard_Engineer",
+        "steam_id": 76561198153972834,
+        "message": "Are pyro's dead",
+        "chat_type": "Team"
+      },
+      {
+        "time": 390,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "^‿^",
+        "chat_type": "All"
+      },
+      {
+        "time": 395,
+        "name": "=(eGO)= Minty",
+        "steam_id": 76561198045990770,
+        "message": ";w;",
+        "chat_type": "All"
+      },
+      {
+        "time": 448,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "lol",
+        "chat_type": "All"
+      },
+      {
+        "time": 451,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "he doesnt hit those",
+        "chat_type": "All"
+      },
+      {
+        "time": 452,
+        "name": "makxbi",
+        "steam_id": 76561198000630119,
+        "message": ":3",
+        "chat_type": "All"
+      },
+      {
+        "time": 505,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "comms",
+        "chat_type": "Team"
+      },
+      {
+        "time": 506,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "stop",
+        "chat_type": "Team"
+      },
+      {
+        "time": 540,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "LOL",
+        "chat_type": "All"
+      },
+      {
+        "time": 542,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "^‿^",
+        "chat_type": "All"
+      },
+      {
+        "time": 545,
+        "name": "=(eGO)= Noblenote",
+        "steam_id": 76561198049359343,
+        "message": "<3",
+        "chat_type": "All"
+      },
+      {
+        "time": 567,
+        "name": "=(eGO)= Dianite",
+        "steam_id": 76561198127826380,
+        "message": "That angle",
+        "chat_type": "All"
+      },
+      {
+        "time": 570,
+        "name": "=(eGO)= Dianite",
+        "steam_id": 76561198127826380,
+        "message": "I saw that sniper",
+        "chat_type": "All"
+      },
+      {
+        "time": 575,
+        "name": "Wizard_Engineer",
+        "steam_id": 76561198153972834,
+        "message": "nice",
+        "chat_type": "All"
+      },
+      {
+        "time": 681,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "oofed",
+        "chat_type": "All"
+      },
+      {
+        "time": 681,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "I ",
+        "chat_type": "All"
+      },
+      {
+        "time": 682,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "Still",
+        "chat_type": "All"
+      },
+      {
+        "time": 683,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "WIn",
+        "chat_type": "All"
+      },
+      {
+        "time": 764,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "LOL",
+        "chat_type": "All"
+      },
+      {
+        "time": 767,
+        "name": "makxbi",
+        "steam_id": 76561198000630119,
+        "message": "holy heck",
+        "chat_type": "All"
+      },
+      {
+        "time": 776,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "KEK XD LOL YOUR MOM GAY ecks dee",
+        "chat_type": "All"
+      },
+      {
+        "time": 871,
+        "name": "=(eGO)= PepperRabbit",
+        "steam_id": 76561197999942178,
+        "message": "wyf",
+        "chat_type": "All"
+      },
+      {
+        "time": 874,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "HAHA",
+        "chat_type": "All"
+      },
+      {
+        "time": 877,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "my spy is a god",
+        "chat_type": "All"
+      },
+      {
+        "time": 879,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "^‿^",
+        "chat_type": "All"
+      },
+      {
+        "time": 890,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "I am disposable",
+        "chat_type": "All"
+      },
+      {
+        "time": 899,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "im so bad :(",
+        "chat_type": "All"
+      },
+      {
+        "time": 905,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "faggot",
+        "chat_type": "All"
+      },
+      {
+        "time": 959,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "my soldier made bait calls",
+        "chat_type": "All"
+      },
+      {
+        "time": 959,
+        "name": "young kawa",
+        "steam_id": 76561198149443710,
+        "message": "wtf",
+        "chat_type": "All"
+      },
+      {
+        "time": 964,
+        "name": "=(eGO)= Noblenote",
+        "steam_id": 76561198049359343,
+        "message": "the man !",
+        "chat_type": "All"
+      },
+      {
+        "time": 979,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "u dont deserve",
+        "chat_type": "All"
+      },
+      {
+        "time": 985,
+        "name": "=(eGO)= Noblenote",
+        "steam_id": 76561198049359343,
+        "message": "sure",
+        "chat_type": "All"
+      },
+      {
+        "time": 1197,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "owned",
+        "chat_type": "All"
+      },
+      {
+        "time": 1198,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "retards",
+        "chat_type": "All"
+      },
+      {
+        "time": 1201,
+        "name": "=(eGO)= Dianite",
+        "steam_id": 76561198127826380,
+        "message": "fuck off",
+        "chat_type": "All"
+      },
+      {
+        "time": 1404,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "aaaaaaaaaaaaaaaaaa",
+        "chat_type": "All"
+      },
+      {
+        "time": 1499,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "kk",
+        "chat_type": "All"
+      },
+      {
+        "time": 1541,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "LOL",
+        "chat_type": "All"
+      },
+      {
+        "time": 1546,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "interp niggas be like",
+        "chat_type": "All"
+      },
+      {
+        "time": 1587,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "i was following orders ;-;",
+        "chat_type": "All"
+      },
+      {
+        "time": 1615,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "lol",
+        "chat_type": "All"
+      },
+      {
+        "time": 1635,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "nigger",
+        "chat_type": "All"
+      },
+      {
+        "time": 1638,
+        "name": "raijin",
+        "steam_id": 76561198092494136,
+        "message": "lmao",
+        "chat_type": "All"
+      },
+      {
+        "time": 1638,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "dont taunt ",
+        "chat_type": "All"
+      },
+      {
+        "time": 1640,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "ur trash",
+        "chat_type": "All"
+      },
+      {
+        "time": 1648,
+        "name": "=(eGO)= Minty",
+        "steam_id": 76561198045990770,
+        "message": "didn't you just get airpiped?",
+        "chat_type": "All"
+      },
+      {
+        "time": 1650,
+        "name": "makxbi",
+        "steam_id": 76561198000630119,
+        "message": "yikes",
+        "chat_type": "All"
+      },
+      {
+        "time": 1652,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "?",
+        "chat_type": "All"
+      },
+      {
+        "time": 1655,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "no?",
+        "chat_type": "All"
+      },
+      {
+        "time": 1656,
+        "name": "=(eGO)= Kwader11",
+        "steam_id": 76561198079513105,
+        "message": "moron?",
+        "chat_type": "All"
+      },
+      {
+        "time": 1662,
+        "name": "=(eGO)= Man Spreading is real",
+        "steam_id": 76561198284869610,
+        "message": "my med is questioning his sexuality",
+        "chat_type": "All"
+      },
+      {
+        "time": 1755,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "lmfao",
+        "chat_type": "All"
+      },
+      {
+        "time": 1768,
+        "name": "=(eGO)= | Akira",
+        "steam_id": 76561197984649997,
+        "message": "lol gg :>",
+        "chat_type": "All"
+      },
+      {
+        "time": 1776,
+        "name": "=(eGO)= Minty",
+        "steam_id": 76561198045990770,
+        "message": "gg's :)",
+        "chat_type": "All"
+      },
+      {
+        "time": 1778,
+        "name": "aimboat",
+        "steam_id": 76561198218131923,
+        "message": "gg",
+        "chat_type": "All"
+      }
+    ]
+  },
+  "per_player": {
+    "[U:1:114365027]": {
+      "stats": {
+        "kills": [
+          1,
+          1,
+          4,
+          3,
+          3,
+          6,
+          3,
+          1,
+          4,
+          0
+        ],
+        "deaths": [
+          4,
+          8,
+          1,
+          5,
+          4,
+          0,
+          0,
+          1,
+          4,
+          0
+        ],
+        "assists": [
+          2,
+          3,
+          2,
+          0,
+          2,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          790,
+          729,
+          2098,
+          1676,
+          3898,
+          1382,
+          1070,
+          392,
+          354,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:119247377]": {
+      "stats": {
+        "kills": [
+          4,
+          1,
+          5,
+          8,
+          8,
+          6,
+          5,
+          11,
+          10,
+          0
+        ],
+        "deaths": [
+          3,
+          3,
+          1,
+          6,
+          1,
+          2,
+          1,
+          4,
+          6,
+          0
+        ],
+        "assists": [
+          0,
+          2,
+          2,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          538,
+          478,
+          2058,
+          2418,
+          5190,
+          1378,
+          1170,
+          2009,
+          860,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:132228408]": {
+      "stats": {
+        "kills": [
+          1,
+          8,
+          5,
+          5,
+          6,
+          3,
+          2,
+          6,
+          3,
+          0
+        ],
+        "deaths": [
+          3,
+          1,
+          1,
+          3,
+          1,
+          2,
+          0,
+          8,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          1,
+          2,
+          2,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          360,
+          1585,
+          3044,
+          2665,
+          3998,
+          847,
+          1429,
+          1329,
+          353,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:135653670]": {
+      "stats": {
+        "kills": [
+          0,
+          12,
+          8,
+          1,
+          1,
+          3,
+          2,
+          2,
+          10,
+          0
+        ],
+        "deaths": [
+          0,
+          2,
+          0,
+          6,
+          8,
+          2,
+          0,
+          3,
+          7,
+          0
+        ],
+        "assists": [
+          2,
+          3,
+          1,
+          2,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          696,
+          1545,
+          1354,
+          1309,
+          2044,
+          419,
+          354,
+          323,
+          1000,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:114365027]": 262,
+        "[U:1:119247377]": 29,
+        "[U:1:189177982]": 63,
+        "[U:1:24384269]": 264,
+        "[U:1:257866195]": 9,
+        "[U:1:324603882]": 200,
+        "[U:1:85725042]": 1
+      },
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:158562864]": {
+      "stats": {
+        "kills": [
+          6,
+          10,
+          1,
+          2,
+          1,
+          8,
+          0,
+          0,
+          14,
+          0
+        ],
+        "deaths": [
+          1,
+          1,
+          1,
+          3,
+          4,
+          0,
+          0,
+          3,
+          4,
+          0
+        ],
+        "assists": [
+          1,
+          4,
+          7,
+          2,
+          0,
+          3,
+          2,
+          0,
+          4,
+          0
+        ],
+        "damage": [
+          1471,
+          1837,
+          1206,
+          1093,
+          1256,
+          1469,
+          104,
+          25,
+          1256,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:114365027]": 123,
+        "[U:1:119247377]": 5,
+        "[U:1:135653670]": 168,
+        "[U:1:189177982]": 11,
+        "[U:1:193707106]": 575,
+        "[U:1:24384269]": 147,
+        "[U:1:324603882]": 151
+      },
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:167560652]": {
+      "stats": {
+        "kills": [
+          5,
+          0,
+          1,
+          0,
+          2,
+          0,
+          3,
+          2,
+          1,
+          0
+        ],
+        "deaths": [
+          6,
+          2,
+          1,
+          6,
+          3,
+          8,
+          0,
+          6,
+          1,
+          0
+        ],
+        "assists": [
+          3,
+          0,
+          4,
+          1,
+          1,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        "damage": [
+          611,
+          279,
+          764,
+          608,
+          407,
+          173,
+          247,
+          465,
+          289,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:132228408]": 51,
+        "[U:1:302899551]": 104,
+        "[U:1:39676450]": 85,
+        "[U:1:71844259]": 110,
+        "[U:1:85725042]": 29
+      },
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:189177982]": {
+      "stats": {
+        "kills": [
+          9,
+          11,
+          2,
+          3,
+          1,
+          6,
+          1,
+          3,
+          9,
+          0
+        ],
+        "deaths": [
+          9,
+          3,
+          5,
+          1,
+          2,
+          5,
+          0,
+          5,
+          3,
+          0
+        ],
+        "assists": [
+          3,
+          4,
+          0,
+          1,
+          0,
+          1,
+          0,
+          2,
+          2,
+          0
+        ],
+        "damage": [
+          2184,
+          1945,
+          901,
+          1001,
+          642,
+          1187,
+          330,
+          729,
+          1233,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:193707106]": {
+      "stats": {
+        "kills": [
+          0,
+          3,
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          9,
+          0
+        ],
+        "deaths": [
+          1,
+          3,
+          0,
+          5,
+          6,
+          1,
+          1,
+          0,
+          4,
+          0
+        ],
+        "assists": [
+          2,
+          3,
+          0,
+          3,
+          0,
+          1,
+          0,
+          0,
+          5,
+          0
+        ],
+        "damage": [
+          265,
+          978,
+          701,
+          830,
+          412,
+          222,
+          293,
+          79,
+          921,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:24384269]": {
+      "stats": {
+        "kills": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "deaths": [
+          0,
+          4,
+          1,
+          2,
+          0,
+          3,
+          0,
+          3,
+          6,
+          0
+        ],
+        "assists": [
+          0,
+          2,
+          3,
+          1,
+          4,
+          1,
+          0,
+          1,
+          5,
+          0
+        ],
+        "damage": [
+          0,
+          64,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          214,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:114365027]": 6824,
+        "[U:1:119247377]": 1350,
+        "[U:1:135653670]": 8990,
+        "[U:1:158562864]": 2842,
+        "[U:1:189177982]": 1937,
+        "[U:1:193707106]": 6376,
+        "[U:1:257866195]": 50,
+        "[U:1:324603882]": 1857,
+        "[U:1:94076274]": 285
+      },
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 4.15,
+        "avg_time_to_build": 58.875,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 5.4111114,
+        "charge_count": 9,
+        "drops": 0
+      }
+    },
+    "[U:1:257866195]": {
+      "stats": {
+        "kills": [
+          3,
+          1,
+          4,
+          4,
+          7,
+          4,
+          6,
+          6,
+          2,
+          0
+        ],
+        "deaths": [
+          9,
+          4,
+          9,
+          4,
+          10,
+          14,
+          0,
+          10,
+          0,
+          0
+        ],
+        "assists": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          847,
+          1226,
+          2942,
+          3652,
+          9309,
+          3207,
+          4807,
+          4938,
+          505,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:302899551]": {
+      "stats": {
+        "kills": [
+          2,
+          1,
+          6,
+          4,
+          8,
+          4,
+          0,
+          1,
+          3,
+          0
+        ],
+        "deaths": [
+          1,
+          0,
+          2,
+          3,
+          1,
+          1,
+          0,
+          8,
+          4,
+          0
+        ],
+        "assists": [
+          1,
+          2,
+          1,
+          5,
+          3,
+          1,
+          2,
+          2,
+          2,
+          0
+        ],
+        "damage": [
+          426,
+          650,
+          989,
+          1663,
+          4147,
+          769,
+          234,
+          283,
+          591,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:132228408]": 85,
+        "[U:1:71844259]": 176,
+        "[U:1:85725042]": 150
+      },
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:324603882]": {
+      "stats": {
+        "kills": [
+          6,
+          3,
+          3,
+          1,
+          0,
+          2,
+          2,
+          3,
+          4,
+          0
+        ],
+        "deaths": [
+          4,
+          4,
+          1,
+          8,
+          1,
+          0,
+          2,
+          7,
+          1,
+          0
+        ],
+        "assists": [
+          0,
+          0,
+          2,
+          0,
+          0,
+          2,
+          0,
+          1,
+          1,
+          0
+        ],
+        "damage": [
+          1248,
+          768,
+          1222,
+          1146,
+          935,
+          999,
+          659,
+          640,
+          528,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:39676450]": {
+      "stats": {
+        "kills": [
+          9,
+          4,
+          1,
+          4,
+          0,
+          1,
+          0,
+          3,
+          4,
+          0
+        ],
+        "deaths": [
+          9,
+          6,
+          0,
+          1,
+          0,
+          6,
+          0,
+          4,
+          2,
+          0
+        ],
+        "assists": [
+          1,
+          2,
+          1,
+          0,
+          0,
+          3,
+          0,
+          1,
+          2,
+          0
+        ],
+        "damage": [
+          1590,
+          960,
+          807,
+          975,
+          515,
+          762,
+          165,
+          464,
+          622,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:40364391]": {
+      "stats": {
+        "kills": [
+          5,
+          7,
+          0,
+          1,
+          3,
+          3,
+          3,
+          4,
+          1,
+          0
+        ],
+        "deaths": [
+          3,
+          3,
+          1,
+          1,
+          2,
+          0,
+          0,
+          11,
+          5,
+          0
+        ],
+        "assists": [
+          2,
+          2,
+          1,
+          0,
+          2,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        "damage": [
+          1149,
+          1885,
+          423,
+          911,
+          1776,
+          726,
+          506,
+          671,
+          352,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:71844259]": {
+      "stats": {
+        "kills": [
+          5,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          12,
+          0
+        ],
+        "deaths": [
+          2,
+          3,
+          1,
+          4,
+          8,
+          1,
+          0,
+          5,
+          0,
+          0
+        ],
+        "assists": [
+          3,
+          4,
+          3,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          600,
+          597,
+          603,
+          661,
+          653,
+          315,
+          322,
+          298,
+          1338,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:85725042]": {
+      "stats": {
+        "kills": [
+          0,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "deaths": [
+          1,
+          2,
+          1,
+          3,
+          2,
+          0,
+          0,
+          5,
+          3,
+          0
+        ],
+        "assists": [
+          3,
+          0,
+          3,
+          2,
+          7,
+          2,
+          0,
+          3,
+          3,
+          0
+        ],
+        "damage": [
+          101,
+          149,
+          171,
+          0,
+          246,
+          0,
+          0,
+          139,
+          0,
+          0
+        ]
+      },
+      "heals": {
+        "[U:1:132228408]": 7415,
+        "[U:1:167560652]": 1519,
+        "[U:1:257866195]": 130,
+        "[U:1:302899551]": 9640,
+        "[U:1:39676450]": 2992,
+        "[U:1:40364391]": 1743,
+        "[U:1:71844259]": 5297,
+        "[U:1:89093615]": 2218
+      },
+      "medic": {
+        "advantages_lost": 1,
+        "biggest_advantage_lost": 19.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 2.2133331,
+        "avg_time_to_build": 68.875,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 6.23,
+        "charge_count": 10,
+        "drops": 0
+      }
+    },
+    "[U:1:89093615]": {
+      "stats": {
+        "kills": [
+          3,
+          4,
+          3,
+          8,
+          2,
+          1,
+          4,
+          3,
+          2,
+          0
+        ],
+        "deaths": [
+          11,
+          3,
+          3,
+          1,
+          12,
+          10,
+          1,
+          1,
+          2,
+          0
+        ],
+        "assists": [
+          1,
+          0,
+          1,
+          0,
+          2,
+          0,
+          3,
+          0,
+          0,
+          0
+        ],
+        "damage": [
+          1344,
+          963,
+          1437,
+          2159,
+          2197,
+          691,
+          1417,
+          534,
+          406,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    },
+    "[U:1:94076274]": {
+      "stats": {
+        "kills": [
+          2,
+          2,
+          0,
+          0,
+          4,
+          1,
+          3,
+          5,
+          0,
+          0
+        ],
+        "deaths": [
+          4,
+          2,
+          12,
+          3,
+          3,
+          1,
+          0,
+          1,
+          2,
+          0
+        ],
+        "assists": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        "damage": [
+          271,
+          946,
+          237,
+          0,
+          7635,
+          183,
+          2792,
+          3395,
+          0,
+          0
+        ]
+      },
+      "heals": {},
+      "medic": {
+        "advantages_lost": 0,
+        "biggest_advantage_lost": 0.0,
+        "near_full_charge_death": 0,
+        "deaths_after_uber": 0,
+        "avg_time_before_healing": 0.0,
+        "avg_time_to_build": 0.0,
+        "avg_time_to_use": 0.0,
+        "avg_uber_length": 0.0,
+        "charge_count": 0,
+        "drops": 0
+      }
+    }
+  }
+}
