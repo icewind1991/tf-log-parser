@@ -58,6 +58,10 @@ pub fn parse(
     parse_with_handler::<LogHandler>(log)
 }
 
+pub fn raw_events<'a>(log: &'a str) -> impl Iterator<Item = Result<RawEvent<'a>>> + 'a {
+    LineSplit::new(log).map(RawEvent::parse)
+}
+
 pub fn parse_with_handler<Handler: EventHandler>(
     log: &str,
 ) -> Result<
@@ -67,7 +71,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     ),
     Error,
 > {
-    let events = LineSplit::new(log).map(RawEvent::parse);
+    let events = raw_events(log);
 
     let mut handler = Handler::default();
 
