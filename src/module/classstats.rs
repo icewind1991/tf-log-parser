@@ -95,9 +95,9 @@ impl EventHandler for ClassStatsHandler {
                 damage: Some(damage),
                 target,
                 ..
-            }) if self.active => {
+            }) if self.active && damage > &0 && damage < &99999 => {
                 if let Some(target_class) = self.get_class(target) {
-                    subject_data.damage[target_class] += damage.get() as u16;
+                    subject_data.damage[target_class] += *damage as u16;
                 }
             }
             _ => {}

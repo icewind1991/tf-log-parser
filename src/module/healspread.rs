@@ -19,7 +19,11 @@ impl PlayerSpecificData for HealSpread {
 
     fn handle_event(&mut self, _meta: &EventMeta, _subject: SubjectId, event: &GameEvent) {
         if let GameEvent::Healed(heal_event) = event {
-            if let Ok(target_subject) = SubjectId::try_from(&heal_event.target) {
+            if let Some(Ok(target_subject)) = heal_event
+                .target
+                .as_ref()
+                .map(|target| SubjectId::try_from(target))
+            {
                 if let Some(target_steam_id) = target_subject.steam_id() {
                     let healed = self.0.entry(SteamId3(target_steam_id)).or_default();
                     *healed += heal_event.amount

@@ -31,6 +31,7 @@ miette = { version = "5.5.0", features = ["fancy"] }
 insta = { version = "1.28.0", features = ["json"] }
 test-case = "3.0.0"
 rayon = "1.7.0"
+indicatif = { version = "0.17.3", features = ["rayon"] }
 
 [[bench]]
 name = "bench"

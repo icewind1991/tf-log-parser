@@ -24,8 +24,8 @@ impl<'a> RawEvent<'a> {
 }
 
 fn event_parser(input: &str) -> Result<RawEvent> {
-    if input.len() < 30 {
-        return Err(Error::Truncated);
+    if input.len() < 24 {
+        return Err(Error::Incomplete);
     }
     let date = RawDate(&input[0..21]);
 
@@ -33,7 +33,7 @@ fn event_parser(input: &str) -> Result<RawEvent> {
 
     let (input, ty) = event_type_parser(input)?;
 
-    let params = &input[(!input.is_empty() as usize)..];
+    let params = &input[((!input.is_empty() && ty != RawEventType::Unknown) as usize)..];
 
     Ok(RawEvent {
         date,
@@ -97,12 +97,22 @@ pub fn split_player_subject(input: &str) -> Result<(&str, &str, &str, &str)> {
         if let (Some(team), Some(steam_id), Some(user_id), Some(name)) =
             (parts.next(), parts.next(), parts.next(), parts.next())
         {
-            (
-                name,
-                &user_id[0..user_id.len() - 1],
-                &steam_id[0..steam_id.len() - 1],
-                &team[0..team.len() - 1],
-            )
+            if steam_id.is_empty() || user_id.is_empty() || team.is_empty() {
+                (name, "0", "", "")
+            } else {
+                (
+                    name,
+                    user_id
+                        .get(0..user_id.len() - 1)
+                        .or_else(|| {
+                            println!("{}", input);
+                            None
+                        })
+                        .expect("asd"),
+                    &steam_id[0..steam_id.len() - 1],
+                    &team[0..team.len() - 1],
+                )
+            }
         } else {
             return Err(Error::Incomplete);
         };
@@ -217,6 +227,8 @@ pub enum RawEventType {
     CarryObject,
     #[token(r#"triggered "player_carryobject""#)]
     DropObject,
+    #[token(r#"triggered "rocket_jump""#)]
+    RocketJump,
     #[token(r#"triggered "killedobject""#)]
     KilledObject,
     #[token(r#"triggered "object_detonated""#)]

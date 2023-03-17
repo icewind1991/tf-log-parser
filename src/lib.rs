@@ -29,8 +29,6 @@ pub enum Error {
     Malformed,
     #[error("Incomplete logfile")]
     Incomplete,
-    #[error("Incomplete logfile")]
-    Truncated, // like incomplete, but when we're certain the log is at fault, and not the parser
     #[error("Malformed subject: {0}")]
     Subject(#[from] SubjectError),
     #[error("{0}")]
@@ -83,7 +81,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     while let Some(event_res) = events.next() {
         let raw_event = match event_res {
             Ok(raw_event) => raw_event,
-            Err(Error::Truncated) => break,
+            Err(Error::Incomplete) if events.next().is_none() => break,
             Err(e) => return Err(e),
         };
         let should_handle = Handler::does_handle(raw_event.ty);

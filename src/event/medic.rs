@@ -1,11 +1,11 @@
-use crate::event::{param_parse_with, parse_field, ParamIter};
+use crate::event::{parse_field, ParamIter};
 use crate::raw_event::RawSubject;
 use crate::{Event, Result};
 
 #[derive(Debug, Event)]
 pub struct HealedEvent<'a> {
     #[event(name = "against")]
-    pub target: RawSubject<'a>,
+    pub target: Option<RawSubject<'a>>,
     #[event(name = "healing")]
     #[event(default)]
     pub amount: u32,

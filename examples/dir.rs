@@ -1,3 +1,4 @@
+use indicatif::ParallelProgressIterator;
 use main_error::MainError;
 use rayon::prelude::*;
 use std::env::args;
@@ -21,6 +22,7 @@ fn main() -> Result<(), MainError> {
         .into_iter()
         .flatten()
         .par_bridge()
+        .progress_count(2_500_000)
         .for_each(|entry| {
             let path = entry.path();
             if path.extension() == Some(OsStr::new("log")) {
@@ -33,10 +35,6 @@ fn main() -> Result<(), MainError> {
                         return;
                     }
                 };
-
-                if count.load(Ordering::Relaxed) % 1_000 == 0 {
-                    println!("{}", path.display());
-                }
 
                 read_time.fetch_add(read_start.elapsed().as_micros() as usize, Ordering::Relaxed);
                 let parse_start = Instant::now();

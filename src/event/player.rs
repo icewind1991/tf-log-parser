@@ -3,7 +3,6 @@ use crate::event::{param_parse_with, parse_field, quoted, ParamIter};
 use crate::raw_event::{subject_parser, RawSubject};
 use crate::{Error, Event, Result};
 use std::net::SocketAddr;
-use std::num::NonZeroU32;
 
 #[derive(Debug, Event)]
 pub struct ShotFiredEvent<'a> {
@@ -20,9 +19,9 @@ pub struct DamageEvent<'a> {
     #[event(name = "against")]
     #[event(default)]
     pub target: RawSubject<'a>,
-    pub damage: Option<NonZeroU32>,
+    pub damage: Option<i64>,
     #[event(name = "realdamage")]
-    pub real_damage: Option<NonZeroU32>,
+    pub real_damage: Option<i64>,
     pub weapon: Option<&'a str>,
 }
 

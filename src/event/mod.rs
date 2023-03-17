@@ -223,6 +223,7 @@ impl EventFieldFromStr for SocketAddr {}
 impl EventFieldFromStr for u8 {}
 impl EventFieldFromStr for u32 {}
 impl EventFieldFromStr for i32 {}
+impl EventFieldFromStr for i64 {}
 impl EventFieldFromStr for f32 {}
 
 impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
