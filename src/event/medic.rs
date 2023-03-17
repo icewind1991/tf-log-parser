@@ -7,6 +7,7 @@ pub struct HealedEvent<'a> {
     #[event(name = "against")]
     pub target: RawSubject<'a>,
     #[event(name = "healing")]
+    #[event(default)]
     pub amount: u32,
 }
 
