@@ -1,5 +1,5 @@
 use crate::common::Team;
-use crate::parsing::{skip, split_once, split_subject_end};
+use crate::parsing::{skip, skip_matches, split_once, split_subject_end};
 use crate::{Error, Result};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -25,7 +25,7 @@ impl<'a> RawEvent<'a> {
 
 fn event_parser(input: &str) -> Result<RawEvent> {
     if input.len() < 24 {
-        return Err(Error::Incomplete);
+        return Err(Error::Skip);
     }
     let date = RawDate(&input[0..21]);
 
@@ -33,7 +33,7 @@ fn event_parser(input: &str) -> Result<RawEvent> {
 
     let (input, ty) = event_type_parser(input)?;
 
-    let params = &input[((!input.is_empty() && ty != RawEventType::Unknown) as usize)..];
+    let params = skip_matches(input, b' ').0;
 
     Ok(RawEvent {
         date,
@@ -189,9 +189,9 @@ fn test_subject_parser() {
 
 #[derive(Copy, Clone, Debug, PartialEq, Logos)]
 pub enum RawEventType {
-    #[token(r#"joined"#)]
+    #[token(r#"joined "#)]
     Joined,
-    #[token(r#"changed role"#)]
+    #[token(r#"changed role "#)]
     RoleChange,
     #[token(r#"triggered "shot_fired""#)]
     ShotFired,
@@ -203,21 +203,21 @@ pub enum RawEventType {
     Healed,
     #[token(r#"triggered "first_heal_after_spawn""#)]
     FirstHeal,
-    #[token(r#"killed"#)]
+    #[token(r#"killed "#)]
     Killed,
     #[token(r#"triggered "kill assist""#)]
     KillAssist,
-    #[token(r#"committed suicide"#)]
+    #[token(r#"committed suicide "#)]
     Suicide,
     #[token(r#"triggered "domination""#)]
     Domination,
     #[token(r#"triggered "revenge""#)]
     Revenge,
-    #[token(r#"spawned"#)]
+    #[token(r#"spawned "#)]
     Spawned,
-    #[token(r#"say_team"#)]
+    #[token(r#"say_team "#)]
     SayTeam,
-    #[token(r#"say"#)]
+    #[token(r#"say "#)]
     Say,
     #[token(r#"triggered "empty_uber""#)]
     EmptyUber,
@@ -235,7 +235,7 @@ pub enum RawEventType {
     ObjectDetonated,
     #[token(r#"triggered "player_extinguished""#)]
     Extinguished,
-    #[token(r#"picked up"#)]
+    #[token(r#"picked up "#)]
     PickedUp,
     #[token(r#"triggered "medic_death""#)]
     MedicDeath,
@@ -275,9 +275,9 @@ pub enum RawEventType {
     CaptureBlocked,
     #[token(r#"triggered "Game_Over""#)]
     GameOver,
-    #[token(r#"current"#)]
+    #[token(r#"current "#)]
     CurrentScore,
-    #[token(r#"final"#)]
+    #[token(r#"final "#)]
     FinalScore,
     #[token(r#"triggered "Intermission_Win_Limit""#)]
     WinLimit,
@@ -285,29 +285,29 @@ pub enum RawEventType {
     Paused,
     #[token(r#"triggered "Game_Unpaused""#)]
     UnPaused,
-    #[token(r#"Request: "#)]
+    #[token(r#"Request:  "#)]
     Request,
-    #[token(r#"Response: "#)]
+    #[token(r#"Response:  "#)]
     Response,
-    #[token(r#"connected,"#)]
+    #[token(r#"connected, "#)]
     Connected,
-    #[token(r#"disconnected"#)]
+    #[token(r#"disconnected "#)]
     Disconnect,
-    #[token(r#"STEAM USERID validated"#)]
+    #[token(r#"STEAM USERID validated "#)]
     SteamIdValidated,
-    #[token(r#"entered the game"#)]
+    #[token(r#"entered the game "#)]
     Entered,
-    #[token(r#"file started"#)]
+    #[token(r#"file started "#)]
     LogFileStarted,
-    #[token(r#"file closed"#)]
+    #[token(r#"file closed "#)]
     LogFileClosed,
-    #[token(r#"The log might have not been uploaded."#)]
+    #[token(r#"The log might have not been uploaded. "#)]
     NotUploaded,
-    #[token(r#"mode started"#)]
+    #[token(r#"mode started "#)]
     TournamentModeStarted,
     #[token(r#"triggered "flagevent""#)]
     FlagEvent,
-    #[token(r#"cvars"#)]
+    #[token(r#"cvars "#)]
     CVars,
     #[error]
     Unknown,

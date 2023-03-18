@@ -29,6 +29,8 @@ pub enum Error {
     Malformed,
     #[error("Incomplete logfile")]
     Incomplete,
+    #[error("Line should be skipped")]
+    Skip,
     #[error("Malformed subject: {0}")]
     Subject(#[from] SubjectError),
     #[error("{0}")]
@@ -82,6 +84,9 @@ pub fn parse_with_handler<Handler: EventHandler>(
         let raw_event = match event_res {
             Ok(raw_event) => raw_event,
             Err(Error::Incomplete) if events.next().is_none() => break,
+            Err(Error::Skip) => {
+                continue;
+            }
             Err(e) => return Err(e),
         };
         let should_handle = Handler::does_handle(raw_event.ty);

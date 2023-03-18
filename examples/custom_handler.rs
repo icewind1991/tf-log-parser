@@ -32,7 +32,7 @@ impl GlobalData for HighestDamageHandler {
             ..
         }) = event
         {
-            let damage = damage.get();
+            let damage = *damage as u32;
             match &mut self.current {
                 Some((_, current_damage)) if damage > *current_damage => {
                     self.current = Some((subject, damage))
