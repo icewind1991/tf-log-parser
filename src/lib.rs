@@ -32,9 +32,21 @@ pub enum Error {
     #[error("Line should be skipped")]
     Skip,
     #[error("Malformed subject: {0}")]
-    Subject(#[from] SubjectError),
+    Subject(Box<SubjectError>),
     #[error("{0}")]
-    MalformedEvent(#[from] GameEventError),
+    MalformedEvent(Box<GameEventError>),
+}
+
+impl From<SubjectError> for Error {
+    fn from(value: SubjectError) -> Self {
+        Error::Subject(Box::new(value))
+    }
+}
+
+impl From<GameEventError> for Error {
+    fn from(value: GameEventError) -> Self {
+        Error::MalformedEvent(Box::new(value))
+    }
 }
 
 impl From<ParseIntError> for Error {

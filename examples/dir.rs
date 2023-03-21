@@ -19,7 +19,7 @@ fn main() -> Result<(), MainError> {
     let start = Instant::now();
 
     let style = ProgressStyle::with_template(
-        "[{elapsed_precise}] {wide_bar:.cyan/blue} {per_sec:!} {pos:>7}/{len:7}",
+        "[{elapsed_precise}] {wide_bar:.cyan/blue} {per_sec:!} {pos:>7}/{len:7} [{eta}]",
     )
     .unwrap();
 

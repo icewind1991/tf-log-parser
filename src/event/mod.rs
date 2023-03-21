@@ -21,8 +21,8 @@ pub enum GameEventError {
         ty: RawEventType,
         params: String,
     },
-    #[error("incomplete event body({0:?})")]
-    Incomplete(RawEventType),
+    #[error("truncated event body({0:?})")]
+    Truncated(RawEventType),
 }
 
 trait GameEventErrTrait<T> {
