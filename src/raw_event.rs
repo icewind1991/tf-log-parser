@@ -99,7 +99,7 @@ pub fn split_player_subject(input: &str) -> Result<(&str, &str, &str, &str)> {
             (parts.next(), parts.next(), parts.next(), parts.next())
         {
             if steam_id.is_empty() || user_id.is_empty() || team.is_empty() {
-                (name, "0", "", "")
+                return Err(Error::Malformed);
             } else {
                 (
                     name,

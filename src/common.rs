@@ -2,12 +2,14 @@ use crate::event::EventFieldFromStr;
 use crate::parsing::find_between_end;
 use crate::raw_event::{split_player_subject, RawSubject};
 use crate::Result;
+use ahash::AHasher;
 use enum_iterator::{all, Sequence};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 use steamid_ng::{AccountType, Instance, SteamID, Universe};
@@ -205,6 +207,7 @@ pub enum SubjectId {
     System,
     World,
     Console,
+    MalformedPlayer(u32),
 }
 
 impl SubjectId {
@@ -221,6 +224,12 @@ impl SubjectId {
     }
 }
 
+fn hash_player_str(s: &str) -> u32 {
+    let mut hasher = AHasher::default();
+    s.hash(&mut hasher);
+    (hasher.finish() & (u32::MAX as u64)) as u32
+}
+
 impl TryFrom<&RawSubject<'_>> for SubjectId {
     type Error = SubjectError;
 
@@ -232,12 +241,16 @@ impl TryFrom<&RawSubject<'_>> for SubjectId {
                         return Ok(SubjectId::Player(account_id));
                     }
                 }
-                let (_, user_id, steam_id, _) = split_player_subject(raw)
-                    .map_err(|_| SubjectError::InvalidSteamId(raw.to_string()))?;
+                let Ok((_, user_id, steam_id, _)) = split_player_subject(raw) else {
+                    return Ok(SubjectId::MalformedPlayer(hash_player_str(*raw)));
+                };
                 if let Ok(steam_id) = SteamID::from_steam2(steam_id) {
                     SubjectId::Player(steam_id.account_id())
                 } else {
-                    SubjectId::Bot(user_id.parse().map_err(|_| SubjectError::InvalidUserId)?)
+                    user_id
+                        .parse()
+                        .map(SubjectId::Bot)
+                        .unwrap_or_else(|_| SubjectId::MalformedPlayer(hash_player_str(*raw)))
                 }
             }
             RawSubject::Team(team) => SubjectId::Team(*team),
@@ -265,6 +278,7 @@ pub enum SubjectData {
     },
     Console,
     World,
+    MalformedPlayer(String),
 }
 
 impl SubjectData {
@@ -276,6 +290,7 @@ impl SubjectData {
             SubjectData::Bot { user_id, .. } => SubjectId::Bot(*user_id),
             SubjectData::Console => SubjectId::Console,
             SubjectData::World => SubjectId::World,
+            SubjectData::MalformedPlayer(raw) => SubjectId::MalformedPlayer(hash_player_str(&raw)),
         }
     }
 }
@@ -294,27 +309,30 @@ impl TryFrom<&RawSubject<'_>> for SubjectData {
     type Error = SubjectError;
 
     fn try_from(raw: &RawSubject<'_>) -> Result<Self, Self::Error> {
-        Ok(match raw {
-            RawSubject::Player(raw) => {
-                let (name, user_id, steam_id, team) =
-                    split_player_subject(raw).map_err(|_| SubjectError::InvalidUserId)?;
-                if let Ok(steam_id) =
-                    SteamID::from_steam3(steam_id).or_else(|_| SteamID::from_steam2(steam_id))
-                {
-                    SubjectData::Player {
-                        name: name.to_string(),
-                        user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
-                        steam_id,
-                        team: team.parse().unwrap_or_default(),
-                    }
-                } else {
-                    SubjectData::Bot {
-                        name: name.to_string(),
-                        user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
-                        team: team.parse().unwrap_or_default(),
-                    }
-                }
+        fn try_parse_player(raw: &str) -> Result<SubjectData, SubjectError> {
+            let (name, user_id, steam_id, team) =
+                split_player_subject(raw).map_err(|_| SubjectError::InvalidUserId)?;
+            if let Ok(steam_id) =
+                SteamID::from_steam3(steam_id).or_else(|_| SteamID::from_steam2(steam_id))
+            {
+                Ok(SubjectData::Player {
+                    name: name.to_string(),
+                    user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
+                    steam_id,
+                    team: team.parse().unwrap_or_default(),
+                })
+            } else {
+                Ok(SubjectData::Bot {
+                    name: name.to_string(),
+                    user_id: user_id.parse().map_err(|_| SubjectError::InvalidUserId)?,
+                    team: team.parse().unwrap_or_default(),
+                })
             }
+        }
+
+        Ok(match raw {
+            RawSubject::Player(raw) => try_parse_player(raw)
+                .unwrap_or_else(|_| SubjectData::MalformedPlayer(raw.to_string())),
             RawSubject::Team(team) => SubjectData::Team(*team),
             RawSubject::System(name) => SubjectData::System(name.to_string()),
             RawSubject::Console => SubjectData::Console,
