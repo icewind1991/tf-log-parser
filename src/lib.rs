@@ -5,11 +5,12 @@ use crate::module::{
     ChatMessages, ClassStatsHandler, HealSpread, MedicStatsBuilder, PlayerHandler,
 };
 pub use crate::subjectmap::SubjectMap;
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDateTime};
 pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
+use std::convert::TryInto;
 use std::fmt::Debug;
 use std::num::ParseIntError;
 pub(crate) use tf_log_parser_derive::{Event, Events};
@@ -107,12 +108,28 @@ pub fn parse_with_handler<Handler: EventHandler>(
                 let event = match GameEvent::parse(&raw_event) {
                     Ok(event) => event,
                     Err(e) => {
-                        // handle truncated logs
-                        if events.next().is_none() {
+                        let Some(next) = events.next() else {
+                            // log is truncated
                             break;
-                        } else {
-                            return Err(e.into());
+                        };
+
+                        if let Ok(next) = next {
+                            let old_date: NaiveDateTime = raw_event
+                                .date
+                                .try_into()
+                                .unwrap_or_else(|_| NaiveDateTime::from_timestamp(0, 0));
+                            let new_date: NaiveDateTime = next
+                                .date
+                                .try_into()
+                                .unwrap_or_else(|_| NaiveDateTime::from_timestamp(0, 0));
+
+                            // truncated lines during log combining, ignore error
+                            if new_date.signed_duration_since(old_date) > Duration::seconds(60) {
+                                continue;
+                            }
                         }
+
+                        return Err(e.into());
                     }
                 };
                 handler.process(&raw_event, &event, &mut start_time, &mut subjects)?;
