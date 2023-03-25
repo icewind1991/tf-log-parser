@@ -5,6 +5,7 @@ use std::env::args;
 use std::ffi::OsStr;
 use std::fs;
 use std::hint::black_box;
+use std::mem::forget;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 use tf_log_parser::parse;
@@ -66,21 +67,25 @@ fn main() -> Result<(), MainError> {
 
             read_time.fetch_add(read_start.elapsed().as_micros() as usize, Ordering::Relaxed);
             let parse_start = Instant::now();
-            let (output, _) = match parse(&input) {
-                Ok(val) => val,
-                Err(e) => {
-                    eprintln!("failed to parse {}: {}", path.display(), e);
-                    return;
-                }
-            };
+            on_panic(
+                || {
+                    let (output, _) = match parse(&input) {
+                        Ok(val) => val,
+                        Err(e) => {
+                            eprintln!("failed to parse {}: {}", path.display(), e);
+                            return;
+                        }
+                    };
+                    black_box(output);
+                },
+                || eprintln!("Paniced on {}", path.display()),
+            );
 
             parse_time.fetch_add(
                 parse_start.elapsed().as_micros() as usize,
                 Ordering::Relaxed,
             );
             count.fetch_add(1, Ordering::Relaxed);
-            black_box(output);
-            // let _ = println!("{} messages", output.chat.len());
         }
     });
 
@@ -102,4 +107,18 @@ fn main() -> Result<(), MainError> {
 
 fn micros_as_sec(micros: usize) -> f32 {
     micros as f32 / 1_000_000.0
+}
+
+struct PanicCanary<F: Fn() -> ()>(F);
+
+impl<F: Fn() -> ()> Drop for PanicCanary<F> {
+    fn drop(&mut self) {
+        (self.0)()
+    }
+}
+
+fn on_panic<F: Fn() -> (), P: Fn() -> ()>(f: F, panic: P) {
+    let canary = PanicCanary(panic);
+    f();
+    forget(canary)
 }
