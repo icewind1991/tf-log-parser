@@ -96,7 +96,7 @@ impl PlayerSpecificData for MedicStatsBuilder {
             }
             GameEvent::ChargeReady => {
                 if self.last_build_start > 0 {
-                    let build_time = meta.time - self.last_build_start;
+                    let build_time = meta.time.saturating_sub(self.last_build_start);
                     self.last_build_start = 0;
                     self.total_time_to_build += build_time;
                     self.uber_build_count += 1;
@@ -109,7 +109,7 @@ impl PlayerSpecificData for MedicStatsBuilder {
                 } else if charge >= 100 {
                     self.drops += 1;
                 }
-                if meta.time - self.last_uber_end <= 10 {
+                if meta.time.saturating_sub(self.last_uber_end) <= 10 {
                     self.deaths_after_uber += 1;
                 }
             }
