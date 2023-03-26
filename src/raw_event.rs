@@ -160,12 +160,16 @@ pub fn subject_parser(input: &str) -> Result<(&str, RawSubject)> {
         }
     } else if input.starts_with("Te") {
         // Team "red" or Team "blue"
-        if &input[6..7] == "r" {
-            Ok((&input[11..], RawSubject::Team(Team::Red)))
-        } else if &input[6..7] == "b" {
-            Ok((&input[12..], RawSubject::Team(Team::Blue)))
+        let first_byte = input.as_bytes().get(6).copied();
+        if first_byte == Some(b'r') {
+            let rest = input.get(11..).ok_or(Error::Malformed)?;
+            Ok((rest, RawSubject::Team(Team::Red)))
+        } else if first_byte == Some(b'b') {
+            let rest = input.get(12..).ok_or(Error::Malformed)?;
+            Ok((rest, RawSubject::Team(Team::Blue)))
         } else {
-            let (_, input) = split_once(&input[7..], b'"', 1)?;
+            let rest = input.get(7..).ok_or(Error::Incomplete)?;
+            let (_, input) = split_once(rest, b'"', 1)?;
             let input = skip(input, 1)?;
             Ok((input, RawSubject::Team(Team::Spectator)))
         }
