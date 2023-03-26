@@ -23,20 +23,18 @@ pub struct ChatMessage {
 }
 
 impl ChatMessage {
-    fn from_bare(bare: BareChatMessage, subjects: &SubjectMap) -> Self {
+    fn from_bare(bare: BareChatMessage, subjects: &SubjectMap) -> Option<Self> {
         let (name, steam_id) = match &subjects[bare.subject] {
             (SubjectData::Player { name, steam_id, .. }, _) => (name.clone(), *steam_id),
-            _ => {
-                unreachable!("only player messages are added");
-            }
+            _ => return None,
         };
-        ChatMessage {
+        Some(ChatMessage {
             time: bare.time,
             name,
             steam_id,
             message: bare.message,
             chat_type: bare.chat_type,
-        }
+        })
     }
 }
 
@@ -81,7 +79,7 @@ impl GlobalData for ChatMessages {
     fn finish(self, subjects: &SubjectMap) -> Self::Output {
         self.0
             .into_iter()
-            .map(|bare| ChatMessage::from_bare(bare, subjects))
+            .filter_map(|bare| ChatMessage::from_bare(bare, subjects))
             .collect()
     }
 }
