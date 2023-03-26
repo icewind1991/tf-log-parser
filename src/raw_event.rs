@@ -26,7 +26,7 @@ impl<'a> RawEvent<'a> {
 fn event_parser(input: &str) -> Result<RawEvent> {
     // println!("{}", input);
     if input.len() < 24 {
-        return Err(Error::Skip);
+        return Err(Error::Incomplete);
     }
     let date = RawDate(&input[0..21]);
 

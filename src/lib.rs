@@ -5,7 +5,7 @@ use crate::module::{
     ChatMessages, ClassStatsHandler, HealSpread, MedicStatsBuilder, PlayerHandler,
 };
 pub use crate::subjectmap::SubjectMap;
-use chrono::{Duration, NaiveDateTime};
+use chrono::{Duration, NaiveDate, NaiveDateTime};
 pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
 pub use raw_event::{RawEvent, RawEventType};
@@ -30,8 +30,6 @@ pub enum Error {
     Malformed,
     #[error("Incomplete logfile")]
     Incomplete,
-    #[error("Line should be skipped")]
-    Skip,
     #[error("Malformed subject: {0}")]
     Subject(Box<SubjectError>),
     #[error("{0}")]
@@ -96,10 +94,7 @@ pub fn parse_with_handler<Handler: EventHandler>(
     while let Some(event_res) = events.next() {
         let raw_event = match event_res {
             Ok(raw_event) => raw_event,
-            Err(Error::Incomplete) if events.next().is_none() => break,
-            Err(Error::Skip) => {
-                continue;
-            }
+            Err(Error::Incomplete) => continue,
             Err(e) => return Err(e),
         };
         let should_handle = Handler::does_handle(raw_event.ty);
@@ -108,16 +103,22 @@ pub fn parse_with_handler<Handler: EventHandler>(
                 let event = match GameEvent::parse(&raw_event) {
                     Ok(event) => event,
                     Err(e) => {
+                        let old_date: NaiveDateTime = raw_event
+                            .date
+                            .try_into()
+                            .unwrap_or_else(|_| NaiveDateTime::from_timestamp(0, 0));
+
+                        // truncated newline during log combining, ignore error
+                        if contains_line_start(raw_event.params, &old_date.date()) {
+                            continue;
+                        }
+
                         let Some(next) = events.next() else {
                             // log is truncated
                             break;
                         };
 
                         if let Ok(next) = next {
-                            let old_date: NaiveDateTime = raw_event
-                                .date
-                                .try_into()
-                                .unwrap_or_else(|_| NaiveDateTime::from_timestamp(0, 0));
                             let new_date: NaiveDateTime = next
                                 .date
                                 .try_into()
@@ -151,6 +152,11 @@ pub fn parse_with_handler<Handler: EventHandler>(
     let global = handler.finish_global(&just_subjects);
 
     Ok((global, per_player))
+}
+
+fn contains_line_start(line: &str, date: &NaiveDate) -> bool {
+    let expected_start = format!("L {}", date.format("%m/%d/%Y"));
+    line.contains(&expected_start)
 }
 
 handler!(LogHandler {
