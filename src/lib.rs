@@ -1,63 +1,27 @@
 pub use crate::common::{SteamId3, SubjectData, SubjectError, SubjectId};
-use crate::event::GameEventError;
 pub use crate::module::EventHandler;
 use crate::module::{
     ChatMessages, ClassStatsHandler, HealSpread, MedicStatsBuilder, PlayerHandler,
 };
 pub use crate::subjectmap::SubjectMap;
 use chrono::{Duration, NaiveDate, NaiveDateTime};
+pub(crate) use error::ResultExt;
+pub use error::{Error, IResult, Result};
 pub use event::{Event, EventMeta, GameEvent};
 use memchr::memmem::{find_iter, FindIter};
 pub use raw_event::{RawEvent, RawEventType};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
-use std::fmt::Debug;
-use std::num::ParseIntError;
 pub(crate) use tf_log_parser_derive::{Event, Events};
-use thiserror::Error;
 
 mod common;
 pub mod event;
 #[macro_use]
 pub mod module;
+mod error;
 pub(crate) mod parsing;
 pub mod raw_event;
 mod subjectmap;
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Malformed logfile")]
-    Malformed,
-    #[error("Incomplete logfile")]
-    Incomplete,
-    #[error("Malformed subject: {0}")]
-    Subject(Box<SubjectError>),
-    #[error("{0}")]
-    MalformedEvent(Box<GameEventError>),
-}
-
-impl From<SubjectError> for Error {
-    fn from(value: SubjectError) -> Self {
-        Error::Subject(Box::new(value))
-    }
-}
-
-impl From<GameEventError> for Error {
-    fn from(value: GameEventError) -> Self {
-        Error::MalformedEvent(Box::new(value))
-    }
-}
-
-impl From<ParseIntError> for Error {
-    fn from(_: ParseIntError) -> Self {
-        Error::Malformed
-    }
-}
-
-pub type Result<O, E = Error> = std::result::Result<O, E>;
-
-#[doc(hidden)]
-pub type IResult<'a, O, E = Error> = std::result::Result<(&'a str, O), E>;
 
 pub fn parse(
     log: &str,
@@ -94,7 +58,8 @@ pub fn parse_with_handler<Handler: EventHandler>(
     while let Some(event_res) = events.next() {
         let raw_event = match event_res {
             Ok(raw_event) => raw_event,
-            Err(Error::Incomplete) => continue,
+            Err(Error::Incomplete) if events.next().is_none() => break,
+            Err(Error::Skip) => continue,
             Err(e) => return Err(e),
         };
         let should_handle = Handler::does_handle(raw_event.ty);

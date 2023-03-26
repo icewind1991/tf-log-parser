@@ -1,6 +1,6 @@
 use crate::common::Team;
 use crate::parsing::{skip, skip_matches, split_once, split_subject_end};
-use crate::{Error, Result};
+use crate::{Error, Result, ResultExt};
 use crate::{SubjectError, SubjectId};
 use chrono::{NaiveDate, NaiveDateTime};
 use logos::{Lexer, Logos};
@@ -26,13 +26,13 @@ impl<'a> RawEvent<'a> {
 fn event_parser(input: &str) -> Result<RawEvent> {
     // println!("{}", input);
     if input.len() < 24 {
-        return Err(Error::Incomplete);
+        return Err(Error::Skip);
     }
     let date = RawDate(&input[0..21]);
 
-    let (input, subject) = subject_parser(&input[23..])?;
+    let (input, subject) = subject_parser(&input[23..]).skip_incomplete()?;
 
-    let (input, ty) = event_type_parser(input)?;
+    let (input, ty) = event_type_parser(input).skip_incomplete()?;
 
     let params = skip_matches(input, b' ').0;
 
