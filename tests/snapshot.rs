@@ -34,9 +34,9 @@ impl From<LogHandlerPerSubjectOutput> for LogPlayerData {
 
 #[derive(Serialize)]
 struct ClassStatsRaw {
-    kills: [u8; 10],
-    deaths: [u8; 10],
-    assists: [u8; 10],
+    kills: [u16; 10],
+    deaths: [u16; 10],
+    assists: [u16; 10],
     damage: [u16; 10],
 }
 
