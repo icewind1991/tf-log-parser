@@ -17,17 +17,34 @@ impl Derivable for Event {
         let optional_params = params.params.iter().filter(|param| param.optional);
         let has_optional = params.params.iter().any(|param| param.optional);
 
+        let single_unnamed_field =
+            params.params.len() == 1 && params.params[0].param_name.is_none();
+
         let required_fields = required_params
             .map(|param| {
                 let field_name = &param.field_name;
                 let parser = param.parser();
                 let after = param.skip_after();
 
-                Ok(quote_spanned!(param.span() =>
-                    #[allow(unused_variables)]
-                    let (input, #field_name) = #parser(input)?;
-                    #after
-                ))
+                if single_unnamed_field {
+                    Ok(quote_spanned!(param.span() =>
+                        #[allow(unused_variables)]
+                        let (input, #field_name) = match #parser(input) {
+                            Ok(res) => res,
+                            Err(Error::Incomplete) => ("", input.trim_matches('"')),
+                            Err(e) => {
+                                return Err(e);
+                            }
+                        };
+                        #after
+                    ))
+                } else {
+                    Ok(quote_spanned!(param.span() =>
+                        #[allow(unused_variables)]
+                        let (input, #field_name) = #parser(input)?;
+                        #after
+                    ))
+                }
             })
             .collect::<Result<Vec<_>>>()?;
         let initiators = params.params.iter().map(|param| {
