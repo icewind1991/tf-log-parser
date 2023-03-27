@@ -103,13 +103,7 @@ pub fn split_player_subject(input: &str) -> Result<(&str, &str, &str, &str)> {
             } else {
                 (
                     name,
-                    user_id
-                        .get(0..user_id.len() - 1)
-                        .or_else(|| {
-                            println!("{}", input);
-                            None
-                        })
-                        .expect("asd"),
+                    user_id.get(0..user_id.len() - 1).ok_or(Error::Malformed)?,
                     &steam_id[0..steam_id.len() - 1],
                     &team[0..team.len() - 1],
                 )
