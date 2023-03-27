@@ -57,13 +57,14 @@ fn main() -> Result<(), MainError> {
         if path.extension() == Some(OsStr::new("log")) {
             // let _ = print!("{} - ", path.display());
             let read_start = Instant::now();
-            let input = match fs::read_to_string(path) {
+            let input = match fs::read(path) {
                 Ok(input) => input,
                 Err(_e) => {
                     // println!("failed to read file: {}", e);
                     return;
                 }
             };
+            let input = String::from_utf8_lossy(&input);
 
             read_time.fetch_add(read_start.elapsed().as_micros() as usize, Ordering::Relaxed);
             let parse_start = Instant::now();

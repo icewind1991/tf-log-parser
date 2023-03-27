@@ -6,7 +6,8 @@ use tf_log_parser::parse;
 
 fn main() -> Result<(), MainError> {
     let path = args().nth(1).expect("No path provided");
-    let content = fs::read_to_string(path)?;
+    let content = fs::read(path)?;
+    let content = String::from_utf8_lossy(&content);
 
     let log = parse(&content)?;
 
