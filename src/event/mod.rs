@@ -220,10 +220,46 @@ impl<'a, T: EventFieldFromStr + 'a> EventField<'a> for T {
 }
 
 impl EventFieldFromStr for SocketAddr {}
-impl EventFieldFromStr for u8 {}
-impl EventFieldFromStr for u32 {}
-impl EventFieldFromStr for i32 {}
-impl EventFieldFromStr for i64 {}
+
+fn parse_int_overflow<T: FromStr>(input: &str, max: T) -> Result<T> {
+    match parse_from_str(input) {
+        Err(e) => {
+            if input.bytes().all(|b| b.is_ascii_digit()) {
+                Ok(max)
+            } else {
+                Err(e)
+            }
+        }
+        r => r,
+    }
+}
+
+impl EventField<'_> for u8 {
+    fn parse_field(input: &str) -> Result<Self> {
+        parse_int_overflow(input, Self::MAX)
+    }
+}
+impl EventField<'_> for u16 {
+    fn parse_field(input: &str) -> Result<Self> {
+        parse_int_overflow(input, Self::MAX)
+    }
+}
+impl EventField<'_> for u32 {
+    fn parse_field(input: &str) -> Result<Self> {
+        parse_int_overflow(input, Self::MAX)
+    }
+}
+impl EventField<'_> for i32 {
+    fn parse_field(input: &str) -> Result<Self> {
+        parse_int_overflow(input, Self::MAX)
+    }
+}
+impl EventField<'_> for i64 {
+    fn parse_field(input: &str) -> Result<Self> {
+        parse_int_overflow(input, Self::MAX)
+    }
+}
+
 impl EventFieldFromStr for f32 {}
 
 impl<'a, T: EventField<'a>> EventField<'a> for (T, T, T) {
