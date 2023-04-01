@@ -8,10 +8,10 @@ name = "tf_log_parser_derive"
 proc-macro = true
 
 [dependencies]
-syn = "1.0"
-quote = "1.0"
-proc-macro2 = "1.0"
-syn_util = "0.4"
+syn = "2.0.12"
+quote = "1.0.26"
+proc-macro2 = "1.0.54"
+structmeta = "0.2.0"
 
 [dev-dependencies]
 tf-log-parser = { version = "0.1", path = ".." }

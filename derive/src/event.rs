@@ -1,9 +1,12 @@
 use crate::{err, Derivable, DeriveParams};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
+use structmeta::StructMeta;
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Field, Fields, Generics, Lifetime, Result, Type, TypePath};
-use syn_util::{contains_attribute, get_attribute_value};
+use syn::{
+    Attribute, Data, DeriveInput, Field, Fields, Generics, Lifetime, LitBool, LitInt, LitStr,
+    Result, Type, TypePath,
+};
 
 pub struct Event;
 
@@ -107,7 +110,6 @@ impl Derivable for Event {
     }
 }
 
-#[derive(Debug)]
 pub struct EventParams {
     name: Ident,
     lifetime: Lifetime,
@@ -117,6 +119,7 @@ pub struct EventParams {
 
 impl DeriveParams for EventParams {
     fn parse(input: &DeriveInput) -> Result<EventParams> {
+        let attrs: EventAttr = parse_attrs(&input.attrs);
         let Data::Struct(data) = &input.data else {
             return err("only supported on structs", input);
         };
@@ -142,10 +145,8 @@ impl DeriveParams for EventParams {
             last_optional = param.optional;
         }
 
-        let lifetime = if let Some(lifetime) =
-            get_attribute_value::<String>(&input.attrs, &["event", "lifetime"])
-        {
-            Lifetime::new(&lifetime, name.span())
+        let lifetime = if let Some(lifetime) = attrs.lifetime {
+            lifetime
         } else {
             let mut lifetimes = input.generics.lifetimes().cloned();
             let lifetime = lifetimes
@@ -167,7 +168,6 @@ impl DeriveParams for EventParams {
     }
 }
 
-#[derive(Debug)]
 pub struct EventParam {
     span: Span,
     field_name: Ident,
@@ -180,12 +180,15 @@ pub struct EventParam {
 
 impl EventParam {
     pub fn parse(input: &Field) -> Result<EventParam> {
+        let attrs: EventAttr = parse_attrs(&input.attrs);
         let field_name = input.ident.clone().expect("no name on named fields");
-        let param_name = if contains_attribute(&input.attrs, &["event", "unnamed"]) {
+        let param_name = if attrs.unnamed {
             None
         } else {
             Some(
-                get_attribute_value(&input.attrs, &["event", "name"])
+                attrs
+                    .name
+                    .map(|lit| lit.value())
                     .unwrap_or_else(|| field_name.to_string()),
             )
         };
@@ -199,16 +202,20 @@ impl EventParam {
             }
             _ => false,
         };
-        let optional = is_option || contains_attribute(&input.attrs, &["event", "default"]);
-        let skip_after =
-            get_attribute_value(&input.attrs, &["event", "skip_after"]).unwrap_or_default();
+        let optional = is_option || attrs.default;
+        let skip_after = attrs
+            .skip_after
+            .and_then(|lit| lit.base10_parse().ok())
+            .unwrap_or_default();
 
         if optional && skip_after > 0 {
             return err("skip_after can't be used with optional fields", input);
         }
-        let quoted =
-            get_attribute_value(&input.attrs, &["event", "quoted"]).unwrap_or(param_name.is_none());
-        let subject = contains_attribute(&input.attrs, &["event", "subject"]);
+        let quoted = attrs
+            .quoted
+            .map(|lit| lit.value)
+            .unwrap_or(param_name.is_none());
+        let subject = attrs.subject;
 
         Ok(EventParam {
             span: input.span(),
@@ -250,6 +257,41 @@ impl EventParam {
             quote_spanned!(self.span() => let input = &input.get(#skip_after..).ok_or(Error::Incomplete)?;)
         } else {
             quote!()
+        }
+    }
+}
+
+fn parse_attrs(attrs: &[Attribute]) -> EventAttr {
+    let mut result = EventAttr::default();
+    for attr in attrs {
+        if let Ok(parsed) = attr.parse_args() {
+            result = result.merge(parsed);
+        }
+    }
+    result
+}
+
+#[derive(Default, StructMeta)]
+struct EventAttr {
+    quoted: Option<LitBool>,
+    subject: bool,
+    default: bool,
+    unnamed: bool,
+    skip_after: Option<LitInt>,
+    name: Option<LitStr>,
+    lifetime: Option<Lifetime>,
+}
+
+impl EventAttr {
+    fn merge(self, other: Self) -> Self {
+        Self {
+            quoted: self.quoted.or(other.quoted),
+            subject: self.subject || other.subject,
+            default: self.default || other.default,
+            unnamed: self.unnamed || other.unnamed,
+            skip_after: self.skip_after.or(other.skip_after),
+            name: self.name.or(other.name),
+            lifetime: self.lifetime.or(other.lifetime),
         }
     }
 }

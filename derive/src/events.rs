@@ -38,7 +38,6 @@ impl Derivable for Events {
     }
 }
 
-#[derive(Debug)]
 pub struct EventsParam {
     name: Ident,
     generics: Generics,

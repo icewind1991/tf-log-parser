@@ -9,7 +9,7 @@ use crate::event::Event;
 use crate::events::Events;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::fmt::{Debug, Display};
+use std::fmt::Display;
 use syn::{parse_macro_input, DeriveInput, Error, Result};
 
 /// Derive the `Event` trait for a struct
@@ -44,7 +44,7 @@ trait Derivable {
     fn derive(params: Self::Params) -> Result<TokenStream>;
 }
 
-trait DeriveParams: Sized + Debug {
+trait DeriveParams: Sized {
     fn parse(input: &DeriveInput) -> Result<Self>;
 }
 
