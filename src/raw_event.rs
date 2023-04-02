@@ -292,17 +292,17 @@ pub enum RawEventType {
     Connected,
     #[token(r#"disconnected "#)]
     Disconnect,
-    #[token(r#"STEAM USERID validated "#)]
+    #[token(r#"STEAM USERID validated"#)]
     SteamIdValidated,
-    #[token(r#"entered the game "#)]
+    #[token(r#"entered the game"#)]
     Entered,
     #[token(r#"file started "#)]
     LogFileStarted,
-    #[token(r#"file closed "#)]
+    #[token(r#"file closed"#)]
     LogFileClosed,
     #[token(r#"The log might have not been uploaded. "#)]
     NotUploaded,
-    #[token(r#"mode started "#)]
+    #[token(r#"mode started"#)]
     TournamentModeStarted,
     #[token(r#"triggered "flagevent""#)]
     FlagEvent,

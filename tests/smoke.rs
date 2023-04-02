@@ -16,8 +16,6 @@ fn smoke_test(name: &str) {
         .read_to_string(&mut content)
         .expect("failed to read");
     for line in LineSplit::new(&content) {
-        if line.starts_with("L ") {
-            RawEvent::parse(line).expect("failed to parse raw event");
-        }
+        RawEvent::parse(line).expect("failed to parse raw event");
     }
 }
