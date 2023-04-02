@@ -171,7 +171,15 @@ impl<'a> Iterator for LineSplit<'a> {
 
 #[test]
 fn test_split() {
-    let input = std::fs::read_to_string("test_data/log_2892242.log").unwrap();
+    use flate2::read::GzDecoder;
+    use std::fs::File;
+    use std::io::Read;
+
+    let mut input = String::new();
+    GzDecoder::new(File::open("tests/data/log_2892242.log.gz").expect("failed to open"))
+        .read_to_string(&mut input)
+        .expect("failed to read");
+
     let split: Vec<_> = LineSplit::new(&input).collect();
     let expected: Vec<_> = input
         .split("L ")

@@ -1,6 +1,8 @@
+use flate2::read::GzDecoder;
 use serde::Serialize;
 use std::collections::BTreeMap;
-use std::fs::read_to_string;
+use std::fs::File;
+use std::io::Read;
 use test_case::test_case;
 use tf_log_parser::module::{ClassStats, MedicStats};
 use tf_log_parser::{parse, EventHandler, LogHandler, LogHandlerPerSubjectOutput};
@@ -57,7 +59,11 @@ impl From<ClassStats> for ClassStatsRaw {
 #[test_case("log_bball.log")]
 #[test_case("log_hl.log")]
 fn test_parse(name: &str) {
-    let content = read_to_string(&format!("test_data/{}", name)).unwrap();
+    let path = format!("tests/data/{}.gz", name);
+    let mut content = String::new();
+    GzDecoder::new(File::open(path).expect("failed to open"))
+        .read_to_string(&mut content)
+        .expect("failed to read");
     let (global, per_player) = parse(&content).unwrap();
     let log = LogResult {
         global,

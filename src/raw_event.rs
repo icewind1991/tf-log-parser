@@ -333,30 +333,3 @@ fn test_parse_raw() {
         raw
     );
 }
-
-#[test]
-fn test_parse_all_valid() {
-    use std::io::Read;
-
-    let files = [
-        "test_data/log_6s.log",
-        "test_data/log_hl.log",
-        "test_data/log_bball.log",
-        "test_data/log_2788889.log",
-        "test_data/log_2892242.log",
-    ];
-    let mut buff = String::new();
-
-    for file in files {
-        buff.clear();
-        std::fs::File::open(file)
-            .unwrap()
-            .read_to_string(&mut buff)
-            .unwrap();
-        for line in buff.trim().split("L ").filter(|line| !line.is_empty()) {
-            if line.starts_with("L ") {
-                RawEvent::parse(line).unwrap();
-            }
-        }
-    }
-}
