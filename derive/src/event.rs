@@ -1,7 +1,9 @@
 use crate::{err, Derivable, DeriveParams};
+use merge::Merge;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
 use structmeta::StructMeta;
+use syn::parse::Parse;
 use syn::spanned::Spanned;
 use syn::{
     Attribute, Data, DeriveInput, Field, Fields, Generics, Lifetime, LitBool, LitInt, LitStr,
@@ -119,7 +121,7 @@ pub struct EventParams {
 
 impl DeriveParams for EventParams {
     fn parse(input: &DeriveInput) -> Result<EventParams> {
-        let attrs: EventAttr = parse_attrs(&input.attrs);
+        let attrs: StructAttrs = parse_attrs(&input.attrs);
         let Data::Struct(data) = &input.data else {
             return err("only supported on structs", input);
         };
@@ -154,7 +156,7 @@ impl DeriveParams for EventParams {
                 .map(|lifetime| lifetime.lifetime)
                 .unwrap_or_else(|| Lifetime::new("'_", name.span()));
             if lifetimes.next().is_some() {
-                return err("For structs with more than one lifetime, manually specifiying the lifetime is required", name);
+                return err("For structs with more than one lifetime, manually specifying the lifetime is required", name);
             }
             lifetime
         };
@@ -180,7 +182,7 @@ pub struct EventParam {
 
 impl EventParam {
     pub fn parse(input: &Field) -> Result<EventParam> {
-        let attrs: EventAttr = parse_attrs(&input.attrs);
+        let attrs: FieldAttrs = parse_attrs(&input.attrs);
         let field_name = input.ident.clone().expect("no name on named fields");
         let param_name = if attrs.unnamed {
             None
@@ -261,37 +263,30 @@ impl EventParam {
     }
 }
 
-fn parse_attrs(attrs: &[Attribute]) -> EventAttr {
-    let mut result = EventAttr::default();
+fn parse_attrs<T: Parse + Default + Merge>(attrs: &[Attribute]) -> T {
+    let mut result = T::default();
     for attr in attrs {
         if let Ok(parsed) = attr.parse_args() {
-            result = result.merge(parsed);
+            result.merge(parsed);
         }
     }
     result
 }
 
-#[derive(Default, StructMeta)]
-struct EventAttr {
-    quoted: Option<LitBool>,
-    subject: bool,
-    default: bool,
-    unnamed: bool,
-    skip_after: Option<LitInt>,
-    name: Option<LitStr>,
+#[derive(Default, StructMeta, Merge)]
+struct StructAttrs {
     lifetime: Option<Lifetime>,
 }
 
-impl EventAttr {
-    fn merge(self, other: Self) -> Self {
-        Self {
-            quoted: self.quoted.or(other.quoted),
-            subject: self.subject || other.subject,
-            default: self.default || other.default,
-            unnamed: self.unnamed || other.unnamed,
-            skip_after: self.skip_after.or(other.skip_after),
-            name: self.name.or(other.name),
-            lifetime: self.lifetime.or(other.lifetime),
-        }
-    }
+#[derive(Default, StructMeta, Merge)]
+struct FieldAttrs {
+    quoted: Option<LitBool>,
+    #[merge(strategy = merge::bool::overwrite_false)]
+    subject: bool,
+    #[merge(strategy = merge::bool::overwrite_false)]
+    default: bool,
+    #[merge(strategy = merge::bool::overwrite_false)]
+    unnamed: bool,
+    skip_after: Option<LitInt>,
+    name: Option<LitStr>,
 }
