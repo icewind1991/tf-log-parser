@@ -1,3 +1,5 @@
+# Moved to https://codeberg.org/icewind/tf-log-parser
+
 # tf-log-parser
 
 TF2 log parser with a focus on speed and flexibility.
